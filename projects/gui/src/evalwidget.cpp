@@ -29,7 +29,7 @@ EvalWidget::EvalWidget(QWidget *parent)
 	: QWidget(parent),
 	  m_player(nullptr),
 	  m_statsTable(new QTableWidget(1, 5, this)),
-	  m_pvTable(new QTableWidget(0, 5, this)),
+	  m_pvTable(new QTableWidget(0, 6, this)),
 	  m_depth(-1)
 {
 	m_statsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -53,13 +53,14 @@ EvalWidget::EvalWidget(QWidget *parent)
 	m_pvTable->verticalHeader()->hide();
 
 	QStringList pvHeaders;
-	pvHeaders << tr("Depth") << tr("Time") << tr("Nodes")
+	pvHeaders << tr("Depth") << tr("Time") << tr("Decision Time") << tr("Nodes")
 		  << tr("Score") << tr("PV");
 	m_pvTable->setHorizontalHeaderLabels(pvHeaders);
 	m_pvTable->setColumnWidth(0, 60);
 	m_pvTable->setColumnWidth(1, 60);
 	m_pvTable->setColumnWidth(2, 100);
-	m_pvTable->setColumnWidth(3, 60);
+	m_pvTable->setColumnWidth(3, 100);
+	m_pvTable->setColumnWidth(4, 60);
 	m_pvTable->horizontalHeader()->setStretchLastSection(true);
 	m_pvTable->setWordWrap(false);
 
@@ -142,16 +143,21 @@ void EvalWidget::onEval(const MoveEvaluation& eval)
 			depth += "/" + QString::number(eval.selectiveDepth());
 	}
 
-	QString time;
-	int ms = eval.time();
-	if (!ms)
-		time = "";
-	else if (ms < 1000)
-		time = QString("%1 ms").arg(ms);
-	else if (ms < 1000 * 60 * 60)
-		time = QTime(0, 0).addMSecs(eval.time()).toString("mm:ss");
-	else
-		time = QTime(0, 0).addMSecs(eval.time()).toString("hh:mm:ss");
+	auto formatTime = [](int ms) {
+		QString time;
+		if (!ms)
+			time = "";
+		else if (ms < 1000)
+			time = QString("%1 ms").arg(ms);
+		else if (ms < 1000 * 60 * 60)
+			time = QTime(0, 0).addMSecs(ms).toString("mm:ss");
+		else
+			time = QTime(0, 0).addMSecs(ms).toString("hh:mm:ss");
+		return time;
+	};
+
+	QString time = formatTime(eval.time());
+	QString decisionTime = eval.decisionTime() ? formatTime(eval.decisionTime()) : "0 ms";
 
 	QString nodeCount;
 	if (eval.nodeCount())
@@ -162,6 +168,7 @@ void EvalWidget::onEval(const MoveEvaluation& eval)
 	QVector<QTableWidgetItem*> items;
 	items << new QTableWidgetItem(depth)
 	      << new QTableWidgetItem(time)
+	      << new QTableWidgetItem(decisionTime)
 	      << new QTableWidgetItem(nodeCount)
 	      << new QTableWidgetItem(score)
 	      << new QTableWidgetItem(eval.pv());

@@ -477,6 +477,8 @@ void UciEngine::parseInfo(const QStringRef& line)
 	QStringRef token(nextToken(line));
 	QVarLengthArray<QStringRef> tokens;
 	MoveEvaluation eval;
+	eval.setLastBestMove(m_currentEval.lastBestMove());
+	eval.setDecisionTime(m_currentEval.decisionTime());
 
 	// The "string" info is not supported and it can't be parsed
 	// like other info lines.
