@@ -188,6 +188,8 @@ void MainWindow::createActions()
 
 	m_newTournamentAct = new QAction(tr("&New..."), this);
 	m_stopTournamentAct = new QAction(tr("&Stop"), this);
+	m_pauseTournamentAct = new QAction(tr("&Pause"), this);
+	m_continueTournamentAc = new QAction(tr("&Continue"), this);
 	m_showTournamentResultsAct = new QAction(tr("&Results..."), this);
 
 	m_showSettingsAct = new QAction(tr("&Settings"), this);
@@ -304,8 +306,12 @@ void MainWindow::createMenus()
 
 	m_tournamentMenu = menuBar()->addMenu(tr("&Tournament"));
 	m_tournamentMenu->addAction(m_newTournamentAct);
+	m_tournamentMenu->addAction(m_continueTournamentAc);
+	m_tournamentMenu->addAction(m_pauseTournamentAct);
 	m_tournamentMenu->addAction(m_stopTournamentAct);
 	m_tournamentMenu->addAction(m_showTournamentResultsAct);
+	m_continueTournamentAc->setEnabled(false);
+	m_pauseTournamentAct->setEnabled(false);
 	m_stopTournamentAct->setEnabled(false);
 
 	m_toolsMenu = menuBar()->addMenu(tr("T&ools"));
@@ -806,6 +812,8 @@ void MainWindow::newTournament()
 	auto resultsDialog = CuteChessApplication::instance()->tournamentResultsDialog();
 	connect(t, SIGNAL(finished()),
 		this, SLOT(onTournamentFinished()));
+	connect(t, SIGNAL(paused()),
+		this, SLOT(onTournamentPaused()));
 	connect(t, SIGNAL(gameStarted(ChessGame*, int, int, int)),
 		this, SLOT(addGame(ChessGame*)));
 	connect(t, SIGNAL(gameFinished(ChessGame*, int, int, int)),
@@ -826,8 +834,34 @@ void MainWindow::newTournament()
 
 		t->stop();
 	});
+	connect(m_pauseTournamentAct, &QAction::triggered, [=]()
+	{
+		auto btn = QMessageBox::question(this, tr("Pause tournament"), tr("Do you really want to pause the ongoing tournament?"));
+		if (btn != QMessageBox::Yes) {
+			m_closing = false;
+			return;
+		}
+
+		m_stopTournamentAct->setEnabled(false);
+		m_pauseTournamentAct->setEnabled(false);
+		t->pause();
+	});
+	connect(m_continueTournamentAc, &QAction::triggered, [=]()
+	{
+		auto btn = QMessageBox::question(this, tr("Continue tournament"), tr("Do you really want to continue the paused tournament?"));
+		if (btn != QMessageBox::Yes) {
+			m_closing = false;
+			return;
+		}
+
+		m_continueTournamentAc->setEnabled(false);
+		m_stopTournamentAct->setEnabled(true);
+		m_pauseTournamentAct->setEnabled(true);
+		t->continueAfterPause();
+	});
 	m_newTournamentAct->setEnabled(false);
 	m_stopTournamentAct->setEnabled(true);
+	m_pauseTournamentAct->setEnabled(true);
 	resultsDialog->setTournament(t);
 }
 
@@ -837,6 +871,7 @@ void MainWindow::onTournamentFinished()
 	Q_ASSERT(tournament != nullptr);
 
 	m_stopTournamentAct->disconnect();
+	m_pauseTournamentAct->disconnect();
 
 	QString error = tournament->errorString();
 	QString name = tournament->name();
@@ -844,6 +879,7 @@ void MainWindow::onTournamentFinished()
 	tournament->deleteLater();
 	m_newTournamentAct->setEnabled(true);
 	m_stopTournamentAct->setEnabled(false);
+	m_pauseTournamentAct->setEnabled(false);
 
 	if (m_closing)
 	{
@@ -862,6 +898,12 @@ void MainWindow::onTournamentFinished()
 	}
 
 	CuteChessApplication::alert(this);
+}
+
+void MainWindow::onTournamentPaused()
+{
+	m_continueTournamentAc->setEnabled(true);
+	QMessageBox::information(this, "Tournament pause", "The tournament is now paused.");
 }
 
 void MainWindow::onWindowMenuAboutToShow()

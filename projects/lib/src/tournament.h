@@ -25,6 +25,8 @@
 #include <QMap>
 #include <QFile>
 #include <QTextStream>
+#include <QJsonObject>
+#include <QJsonArray>
 #include "board/move.h"
 #include "timecontrol.h"
 #include "pgngame.h"
@@ -349,6 +351,9 @@ class LIB_EXPORT Tournament : public QObject
 		 * is fully stopped.
 		 */
 		void stop();
+		void pause();
+		bool isPaused();
+		void continueAfterPause();
 
 	signals:
 		/*!
@@ -396,8 +401,13 @@ class LIB_EXPORT Tournament : public QObject
 		 * is sent.
 		 */
 		void finished();
+		void paused();
+
+		virtual QJsonObject toJson() const;
+		virtual bool loadFromJson(const QJsonObject& json);
 
 	protected:
+
 		/*! Sets the currently executing tournament round to \a round. */
 		void setCurrentRound(int round);
 		/*! Returns the number of games in progress. */
@@ -711,6 +721,7 @@ class LIB_EXPORT Tournament : public QObject
 		int m_openingDepth;
 		int m_seedCount;
 		bool m_stopping;
+		bool m_pausing, m_paused;
 		int m_openingRepetitions;
 		OpeningPolicy m_openingPolicy;
 		bool m_recover;
