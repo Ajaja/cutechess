@@ -147,6 +147,7 @@ class LIB_EXPORT Board
 		virtual int height() const = 0;
 		/*! Returns the variant's default starting FEN string. */
 		virtual QString defaultFenString() const = 0;
+		virtual QString infoGuiString() const { return ""; };
 		/*! Returns the zobrist key for the current position. */
 		quint64 key() const;
 		/*!

@@ -1072,6 +1072,31 @@ QString StandardBoard::defaultFenString() const
 	return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 }
 
+QString StandardBoard::infoGuiString() const
+{
+	constexpr int PIECE_MATERIAL[] = {0, 1, 3, 3, 5, 9, 0};
+
+	int material[2] = {0, 0};
+	int pieceCount = 0;
+	for (int x = 0; x < width(); x++)
+	{
+		for (int y = 0; y < height(); y++)
+		{
+			Piece piece = pieceAt(Chess::Square(x, y));
+			if (!piece.isEmpty()) {
+				material[piece.side()] += PIECE_MATERIAL[piece.type()];
+				pieceCount++;
+			}
+		}
+	}
+
+	QString result;
+	result += "50-move rule: " + QString::number(reversibleMoveCount()) + "           |           ";
+	result += "Material: " + QString::number(material[0] - material[1]) + "           |           ";
+	result += "Piece count: " + QString::number(pieceCount);
+	return result;
+}
+
 Result StandardBoard::tablebaseResult(unsigned int* dtz) const
 {
 	SyzygyTablebase::PieceList pieces;

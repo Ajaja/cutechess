@@ -135,8 +135,7 @@ void GraphicsBoard::paint(QPainter* painter,
 	const QString alphabet = "abcdefghijklmnopqrstuvwxyz";
 	for (int i = 0; i < m_files; i++)
 	{
-		const qreal tops[] = {m_rect.top() - m_coordSize,
-		                      m_rect.bottom()};
+		const qreal tops[] = {m_rect.bottom()};
 		for (const auto top : tops)
 		{
 			rect = QRectF(m_rect.left() + (m_squareSize * i), top,
@@ -145,6 +144,11 @@ void GraphicsBoard::paint(QPainter* painter,
 			painter->drawText(rect, Qt::AlignCenter, alphabet[file]);
 		}
 	}
+
+	// Board state text
+	rect = QRectF(m_rect.left() + (m_squareSize * 0), m_rect.top() - m_coordSize,
+			              m_squareSize * m_files, m_coordSize);
+	painter->drawText(rect, Qt::AlignCenter, m_infoGuiString);
 
 	// paint rank coordinates
 	for (int i = 0; i < m_ranks; i++)
@@ -330,5 +334,10 @@ void GraphicsBoard::setFlipped(bool flipped)
 
 	clearHighlights();
 	m_flipped = flipped;
+	update();
+}
+
+void GraphicsBoard::setInfoGuiString(QString string) {
+	m_infoGuiString = string;
 	update();
 }

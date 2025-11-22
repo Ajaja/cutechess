@@ -130,6 +130,8 @@ void BoardScene::populate()
 		}
 	}
 
+	m_squares->setInfoGuiString(m_board->infoGuiString());
+
 	updateMoves();
 }
 
@@ -563,6 +565,8 @@ void BoardScene::addMoveArrow(const QPointF& sourcePos,
 void BoardScene::applyTransition(const Chess::BoardTransition& transition,
 				 MoveDirection direction)
 {
+	m_squares->setInfoGuiString(m_board->infoGuiString());
+
 	m_transition = transition;
 	m_direction = direction;
 
