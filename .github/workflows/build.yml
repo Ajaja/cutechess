@@ -71,5 +71,5 @@ jobs:
 
             - uses: actions/upload-artifact@v4
               with:
-                name: windows-x64-build
+                name: windows-x64-build-${{ matrix.qt_version }}
                 path: D:\a\cutechess\cutechess\build\Release
