@@ -16,6 +16,19 @@ endif()
 
 option(WITH_TESTS "Enable building of unit tests" ON)
 
+option(USE_UBSAN "Enable Undefined Behavior Sanitizer" ON)
+
+if(USE_UBSAN)
+    if(MSVC)
+        add_compile_options(/fsanitize=undefined)
+        add_link_options(/fsanitize=undefined)
+    else()
+        # Recommended for GCC/Clang to get better stack traces
+        add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer)
+        add_link_options(-fsanitize=undefined)
+    endif()
+endif()
+
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)

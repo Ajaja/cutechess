@@ -22,6 +22,10 @@
 #include "enginetextoption.h"
 #include "engineoptionfactory.h"
 
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+
 EngineConfiguration::EngineConfiguration()
 	: m_variants(QStringList() << "standard"),
 	  m_whiteEvalPov(false),
@@ -429,4 +433,64 @@ EngineConfiguration& EngineConfiguration::operator=(const EngineConfiguration& o
 			m_options.append(option->copy());
 	}
 	return *this;
+}
+
+QJsonObject EngineConfiguration::toJson() const
+{
+    QVariantMap map = toVariant().toMap();
+    
+    if (!m_arguments.isEmpty())
+        map.insert("arguments", m_arguments);
+
+    return QJsonObject::fromVariantMap(map);
+}
+
+bool EngineConfiguration::loadFromJson(const QJsonObject& json)
+{
+    if (json.isEmpty())
+        return false;
+
+    QVariantMap map = json.toVariantMap();
+
+    m_name = map["name"].toString();
+    m_command = map["command"].toString();
+    m_workingDirectory = map["workingDirectory"].toString();
+    m_stderrFile = map["stderrFile"].toString();
+    m_protocol = map["protocol"].toString();
+
+    if (map.contains("arguments"))
+        m_arguments = map["arguments"].toStringList();
+    if (map.contains("initStrings"))
+        m_initStrings = map["initStrings"].toStringList();
+    if (map.contains("variants"))
+        m_variants = map["variants"].toStringList();
+
+    m_whiteEvalPov = map.value("whitepov", false).toBool();
+    m_pondering = map.value("ponder", false).toBool();
+    m_validateClaims = map.value("validateClaims", true).toBool();
+    m_debugEnabled = map.value("debug", false).toBool();
+
+    bool ok;
+    double tscale = map["timeoutScaleFactor"].toDouble(&ok);
+    m_timeoutScale = ok ? qBound(timeoutScaleMin, tscale, timeoutScaleMax) : 1.0;
+
+    QString restart = map["restart"].toString();
+    if (restart == "on") m_restartMode = RestartOn;
+    else if (restart == "off") m_restartMode = RestartOff;
+    else m_restartMode = RestartAuto;
+
+    if (map.contains("options"))
+    {
+        qDeleteAll(m_options);
+        m_options.clear();
+        const QVariantList optionsList = map["options"].toList();
+        for (const QVariant& optionVariant : optionsList)
+        {
+            EngineOption* option = EngineOptionFactory::create(optionVariant.toMap());
+            if (option)
+                m_options << option;
+        }
+    }
+
+    return true;
 }

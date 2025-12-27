@@ -20,6 +20,8 @@
 #define OPENINGSUITE_H
 
 #include <QVector>
+#include <QJsonObject>
+
 #include "pgngame.h"
 class QString;
 class QFile;
@@ -105,6 +107,9 @@ class LIB_EXPORT OpeningSuite
 		 * A maximum of \a maxPlies plies (halfmoves) are read.
 		 */
 		PgnGame nextGame(int maxPlies);
+
+		QJsonObject toJson() const;
+		bool loadFromJson(const QJsonObject& json);
 
 	private:
 		struct FilePosition

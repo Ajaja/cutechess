@@ -1197,124 +1197,185 @@ QString ResultFormatter::entry(const QMap<int, QString>& data) const
 	return ret;
 }
 
-// QJsonObject Tournament::toJson() const
-// {
-//     QJsonObject json;
+QJsonObject Tournament::toJson() const
+{
+    QJsonObject json;
 
-//     // 1. Basic Metadata
-//     json["type"] = type();
-//     json["error"] = m_error;
-//     json["name"] = m_name;
-//     json["site"] = m_site;
-//     json["variant"] = m_variant;
+    json["type"] = type();
+    json["error"] = m_error;
+    json["name"] = m_name;
+    json["site"] = m_site;
+    json["variant"] = m_variant;
     
-//     // 2. Configuration Integers/Bools
-//     json["gamesPerEncounter"] = m_gamesPerEncounter;
-//     json["roundMultiplier"] = m_roundMultiplier;
-//     json["startDelay"] = m_startDelay;
-//     json["openingDepth"] = m_openingDepth;
-//     json["seedCount"] = m_seedCount;
-//     json["openingRepetitions"] = m_openingRepetitions;
-//     json["openingPolicy"] = static_cast<int>(m_openingPolicy);
-//     json["recover"] = m_recover;
-//     json["pgnCleanup"] = m_pgnCleanup;
-//     json["pgnWriteUnfinished"] = m_pgnWriteUnfinishedGames;
-//     json["bookOwnership"] = m_bookOwnership;
-//     json["swapSides"] = m_swapSides;
-//     json["reverseSides"] = m_reverseSides;
-//     json["resultFormat"] = m_resultFormat;
-//     json["startFen"] = m_startFen;
-// 	// TODO GameAdjucator m_adjudicator
-// 	// TODO OpeningSuite m_openingSuite
-// 	// TODO Sprt m_sprt
-// 	// TODO TournamentPair m_pair
-// 	// TODO QMap< QPair<int, int>, TournamentPair m_pairs
-// 	// TODO QMap<int, PgnGame> m_pgnGames
-// 	// TODO QMap<ChessGame, GameData> m_gameData
-// 	// QVector<Chess::Move> m_openingMoves
-// 	// QMap<int, QString> m_headerMap
+    json["gamesPerEncounter"] = m_gamesPerEncounter;
+    json["roundMultiplier"] = m_roundMultiplier;
+    json["startDelay"] = m_startDelay;
+    json["openingDepth"] = m_openingDepth;
+    json["seedCount"] = m_seedCount;
+    json["openingRepetitions"] = m_openingRepetitions;
+    json["openingPolicy"] = static_cast<int>(m_openingPolicy);
+    json["recover"] = m_recover;
+    json["pgnCleanup"] = m_pgnCleanup;
+    json["pgnWriteUnfinished"] = m_pgnWriteUnfinishedGames;
+    json["bookOwnership"] = m_bookOwnership;
+    json["swapSides"] = m_swapSides;
+    json["reverseSides"] = m_reverseSides;
+    json["resultFormat"] = m_resultFormat;
+    json["startFen"] = m_startFen;
 
-//     // 3. Runtime State (Where are we in the tournament?)
-//     json["currentRound"] = m_round;
-//     json["oldRound"] = m_oldRound;
-//     json["nextGameNumber"] = m_nextGameNumber;
-//     json["finishedGameCount"] = m_finishedGameCount;
-//     json["savedGameCount"] = m_savedGameCount;
-//     json["finalGameCount"] = m_finalGameCount;
-//     json["repetitionCounter"] = m_repetitionCounter;
+	json["adjudicator"] = m_adjudicator.toJson();
+	json["openingSuite"] = m_openingSuite->toJson();
+	json["sprt"] = m_sprt->toJson();
 
-//     // 4. Complex Objects
-// 	QJsonArray players;
-//     for (const TournamentPlayer& player : m_players) {
-//         players.append(player.toJson());
-//     }
-//     json["players"] = players;
+	QJsonObject pairs;
+	QMapIterator<QPair<int, int>, TournamentPair*> i(m_pairs);
+    while (i.hasNext()) {
+        i.next();
+        QString keyString = QString::number(i.key().first) + "," + 
+                            QString::number(i.key().second);
+        if (i.value()) {
+            pairs[keyString] = i.value()->toJson();
+        }
+    }
+	json["pairs"] = pairs;
 
-//     // 5. Files (Save paths, not file handles)
-//     if (m_pgnFile.isOpen()) {
-//         json["pgnOutputPath"] = m_pgnFile.fileName();
-//         json["pgnOutputMode"] = static_cast<int>(m_pgnOutMode);
-//     }
-//     if (m_epdFile.isOpen()) {
-//         json["epdOutputPath"] = m_epdFile.fileName();
-//     }
+	QJsonObject pgnGames;
+	QMapIterator<int, PgnGame> i2(m_pgnGames);
+	while (i2.hasNext()) {
+		i2.next();
+		QString keyString = QString::number(i2.key());
+		pgnGames[keyString] = i2.value().toJson();
+	}
+	json["pgnGames"] = pgnGames;
 
-//     return json;
-// }
+	QJsonArray openingMoves;
+	for (auto move : m_openingMoves) {
+		openingMoves.append(qint64(move.m_data));
+	}
+	json["openingMoves"] = openingMoves;
 
-// bool Tournament::loadFromJson(const QJsonObject &json)
-// {
-//     // 1. Basic Config
-//     m_error = json["error"].toString();
-//     m_name = json["name"].toString();
-//     m_site = json["site"].toString();
-//     m_variant = json["variant"].toString();
+	QJsonObject headerMap;
+	QMapIterator<int, QString> i4(m_headerMap);
+	while (i4.hasNext()) {
+		i4.next();
+		QString keyString = QString::number(i4.key());
+		headerMap[keyString] = i4.value();
+	}
+	json["headerMap"] = headerMap;
+
+    json["currentRound"] = m_round;
+    json["oldRound"] = m_oldRound;
+    json["nextGameNumber"] = m_nextGameNumber;
+    json["finishedGameCount"] = m_finishedGameCount;
+    json["savedGameCount"] = m_savedGameCount;
+    json["finalGameCount"] = m_finalGameCount;
+    json["repetitionCounter"] = m_repetitionCounter;
+
+	QJsonArray players;
+    for (const TournamentPlayer& player : m_players) {
+        players.append(player.toJson());
+    }
+    json["players"] = players;
+
+    if (m_pgnFile.isOpen()) {
+        json["pgnOutputPath"] = m_pgnFile.fileName();
+        json["pgnOutputMode"] = static_cast<int>(m_pgnOutMode);
+    }
+    if (m_epdFile.isOpen()) {
+        json["epdOutputPath"] = m_epdFile.fileName();
+    }
+
+    return json;
+}
+
+bool Tournament::loadFromJson(const QJsonObject &json)
+{
+    m_error = json["error"].toString();
+    m_name = json["name"].toString();
+    m_site = json["site"].toString();
+    m_variant = json["variant"].toString();
     
-//     // 2. Integers/Bools
-//     m_gamesPerEncounter = json["gamesPerEncounter"].toInt();
-//     m_roundMultiplier = json["roundMultiplier"].toInt();
-//     m_startDelay = json["startDelay"].toInt();
-//     m_openingDepth = json["openingDepth"].toInt();
-//     m_seedCount = json["seedCount"].toInt();
-//     m_openingRepetitions = json["openingRepetitions"].toInt();
-//     m_openingPolicy = static_cast<OpeningPolicy>(json["openingPolicy"].toInt());
-//     m_recover = json["recover"].toBool();
-//     m_pgnCleanup = json["pgnCleanup"].toBool();
-//     m_pgnWriteUnfinishedGames = json["pgnWriteUnfinished"].toBool();
-//     m_bookOwnership = json["bookOwnership"].toBool();
-//     m_swapSides = json["swapSides"].toBool();
-//     m_reverseSides = json["reverseSides"].toBool();
-//     m_resultFormat = json["resultFormat"].toString();
-// 	m_startFen = json["startFen"].toString();
+    m_gamesPerEncounter = json["gamesPerEncounter"].toInt();
+    m_roundMultiplier = json["roundMultiplier"].toInt();
+    m_startDelay = json["startDelay"].toInt();
+    m_openingDepth = json["openingDepth"].toInt();
+    m_seedCount = json["seedCount"].toInt();
+    m_openingRepetitions = json["openingRepetitions"].toInt();
+    m_openingPolicy = static_cast<OpeningPolicy>(json["openingPolicy"].toInt());
+    m_recover = json["recover"].toBool();
+    m_pgnCleanup = json["pgnCleanup"].toBool();
+    m_pgnWriteUnfinishedGames = json["pgnWriteUnfinished"].toBool();
+    m_bookOwnership = json["bookOwnership"].toBool();
+    m_swapSides = json["swapSides"].toBool();
+    m_reverseSides = json["reverseSides"].toBool();
+    m_resultFormat = json["resultFormat"].toString();
+	m_startFen = json["startFen"].toString();
 
-//     // 3. Restore Runtime State
-//     m_round = json["currentRound"].toInt();
-//     m_oldRound = json["oldRound"].toInt();
-//     m_nextGameNumber = json["nextGameNumber"].toInt();
-//     m_finishedGameCount = json["finishedGameCount"].toInt();
-//     m_savedGameCount = json["savedGameCount"].toInt();
-//     m_finalGameCount = json["finalGameCount"].toInt();
-//     m_repetitionCounter = json["repetitionCounter"].toInt();
+    m_round = json["currentRound"].toInt();
+    m_oldRound = json["oldRound"].toInt();
+    m_nextGameNumber = json["nextGameNumber"].toInt();
+    m_finishedGameCount = json["finishedGameCount"].toInt();
+    m_savedGameCount = json["savedGameCount"].toInt();
+    m_finalGameCount = json["finalGameCount"].toInt();
+    m_repetitionCounter = json["repetitionCounter"].toInt();
 
-//     // 4. Restore Players
-//     if (json.contains("players")) {
-//         m_players.clear();
-// 		for (const QJsonValue &val : array) {
-// 			TournamentPlayer player;
-// 			// Assuming TournamentPlayer has loadFromJson
-// 			player.loadFromJson(val.toObject()); 
-// 			m_players.append(player);
-// 		}
-//     }
+	m_adjudicator.loadFromJson(json["adjudicator"].toObject());
+	delete m_openingSuite;
+	m_openingSuite = new OpeningSuite("");
+	m_openingSuite->loadFromJson(json["openingSuite"].toObject());
+	m_sprt->loadFromJson(json["sprt"].toObject());
 
-//     // 5. Re-open Files
-//     if (json.contains("pgnOutputPath")) {
-//         setPgnOutput(json["pgnOutputPath"].toString(), 
-//                      static_cast<PgnGame::PgnMode>(json["pgnOutputMode"].toInt()));
-//     }
-//     if (json.contains("epdOutputPath")) {
-//         setEpdOutput(json["epdOutputPath"].toString());
-//     }
+	qDeleteAll(m_pairs);
+	for (const QString key : json["pairs"].toObject().keys()) {
+		QStringList parts = key.split(",");
+		int first = parts[0].toInt();
+		int second = parts[1].toInt();
+		QPair<int, int> key2(first, second);
+		TournamentPair* pair = new TournamentPair;
+		pair->loadFromJson(json["pairs"].toObject()[key].toObject());
+		m_pairs[key2] = pair;
+	}
 
-//     return true;
-// }
+	m_pgnGames.clear();
+	for (const QString key : json["pgnGames"].toObject().keys()) {
+		int keyInt = key.toInt();
+		PgnGame game;
+		game.loadFromJson(json["pgnGames"].toObject()[key].toObject());
+		m_pgnGames[keyInt] = game;
+	}
+
+	m_openingMoves.clear();
+	for (QJsonValueRef data : json["openingMoves"].toArray()) {
+		Chess::Move move;
+		move.m_data = data.toInt();
+		m_openingMoves.append(move);
+	}
+
+	m_headerMap.clear();
+	for (const QString key : json["headerMap"].toObject().keys()) {
+		int keyInt = key.toInt();
+		m_headerMap[keyInt] = json["headerMap"].toObject()[key].toString();
+	}
+
+    if (json.contains("players")) {
+        m_players.clear();
+		for (const QJsonValue &val : json["players"].toArray()) {
+			TournamentPlayer player;
+			player.loadFromJson(val.toObject()); 
+			m_players.append(player);
+		}
+    }
+
+    if (json.contains("pgnOutputPath")) {
+        setPgnOutput(json["pgnOutputPath"].toString(), 
+                     static_cast<PgnGame::PgnMode>(json["pgnOutputMode"].toInt()));
+    }
+    if (json.contains("epdOutputPath")) {
+        setEpdOutput(json["epdOutputPath"].toString());
+    }
+
+	connect(m_gameManager, SIGNAL(ready()),
+		this, SLOT(startNextGame()));
+
+    return true;
+}

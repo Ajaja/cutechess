@@ -19,6 +19,8 @@
 #ifndef TOURNAMENTPAIR_H
 #define TOURNAMENTPAIR_H
 
+#include <QJsonObject>
+
 /*!
  * \brief A single encounter in a tournament
  *
@@ -111,6 +113,9 @@ class LIB_EXPORT TournamentPair
 		 * second player and vice versa.
 		 */
 		void swapPlayers();
+
+		QJsonObject toJson() const;
+		bool loadFromJson(const QJsonObject& json);
 
 	private:
 		struct Player

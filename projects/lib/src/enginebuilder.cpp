@@ -107,3 +107,24 @@ void EngineBuilder::setError(QString* error, const QString& message) const
 	else
 		qWarning("%s", qUtf8Printable(str));
 }
+
+QJsonObject EngineBuilder::toJson() const
+{
+    QJsonObject json;
+    json["name"] = name();
+    json["config"] = m_config.toJson();
+    return json;
+}
+
+bool EngineBuilder::loadFromJson(const QJsonObject& json)
+{
+    if (json.isEmpty())
+        return false;
+
+    setName(json["name"].toString());
+    
+    if (json.contains("config"))
+        m_config.loadFromJson(json["config"].toObject());
+
+    return true;
+}

@@ -340,6 +340,9 @@ class LIB_EXPORT Tournament : public QObject
 		 */
 		int gameNumber(ChessGame* game) const;
 
+		virtual QJsonObject toJson() const;
+		virtual bool loadFromJson(const QJsonObject& json);
+
 	public slots:
 		/*! Starts the tournament. */
 		void start();
@@ -402,9 +405,6 @@ class LIB_EXPORT Tournament : public QObject
 		 */
 		void finished();
 		void paused();
-
-		virtual QJsonObject toJson() const;
-		virtual bool loadFromJson(const QJsonObject& json);
 
 	protected:
 

@@ -44,6 +44,8 @@ class LIB_EXPORT TournamentFactory
         static Tournament* load(const QJsonObject& json, GameManager* gameManager, QObject* parent = nullptr);
         static Tournament* loadFromFile(const QString& filePath, GameManager* gameManager, QObject* parent = nullptr);
 
+        static void storeToFile(const QString& filePath, Tournament* tournament);
+
 	private:
 		TournamentFactory();
 };

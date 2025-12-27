@@ -109,7 +109,6 @@ class LIB_EXPORT Result
 		 */
 		QString toVerboseString() const;
 
-	private:
 		Type m_type;
 		Side m_winner;
 		QString m_description;

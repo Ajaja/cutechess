@@ -134,3 +134,33 @@ void TournamentPair::swapPlayers()
 	std::swap(m_first, m_second);
 	m_hasOriginalOrder = !m_hasOriginalOrder;
 }
+
+QJsonObject TournamentPair::toJson() const
+{
+    QJsonObject json;
+    
+    json["firstIndex"] = m_first.index;
+    json["firstScore"] = m_first.score;
+    
+    json["secondIndex"] = m_second.index;
+    json["secondScore"] = m_second.score;
+    
+    json["gamesStarted"] = m_gamesStarted;
+    json["hasOriginalOrder"] = m_hasOriginalOrder;
+    
+    return json;
+}
+
+bool TournamentPair::loadFromJson(const QJsonObject& json)
+{
+    m_first.index = json["firstIndex"].toInt();
+    m_first.score = json["firstScore"].toInt();
+    
+    m_second.index = json["secondIndex"].toInt();
+    m_second.score = json["secondScore"].toInt();
+    
+    m_gamesStarted = json["gamesStarted"].toInt();
+    m_hasOriginalOrder = json["hasOriginalOrder"].toBool();
+
+    return true;
+}

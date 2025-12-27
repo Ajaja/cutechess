@@ -33,6 +33,9 @@ class LIB_EXPORT EngineBuilder : public PlayerBuilder
 		/*! Creates a new EngineBuilder. */
 		EngineBuilder(const EngineConfiguration& config);
 
+		virtual QJsonObject toJson() const override;
+        virtual bool loadFromJson(const QJsonObject& json) override;
+
 		// Inherited from PlayerBuilder
 		virtual bool isHuman() const;
 		virtual ChessPlayer* create(QObject* receiver,

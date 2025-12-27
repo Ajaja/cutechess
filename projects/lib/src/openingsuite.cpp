@@ -19,6 +19,7 @@
 #include "openingsuite.h"
 #include <QFile>
 #include <QTextStream>
+#include <QJsonArray>
 #include <algorithm>
 #include "pgnstream.h"
 #include "epdrecord.h"
@@ -303,4 +304,74 @@ OpeningSuite::FilePosition OpeningSuite::getEpdPos()
 	}
 
 	return pos;
+}
+
+QJsonObject OpeningSuite::toJson() const
+{
+    QJsonObject json;
+
+    json["fileName"] = m_fileName;
+    json["fen"] = m_fen;
+    json["format"] = m_format;
+    json["order"] = m_order;
+    json["startIndex"] = m_startIndex;
+    json["gameIndex"] = m_gameIndex;
+    json["gamesRead"] = m_gamesRead;
+
+    QJsonArray posArray;
+    for (const FilePosition& fp : m_filePositions)
+    {
+        QJsonObject posObj;
+        posObj["pos"] = fp.pos;
+        posObj["line"] = fp.lineNumber;
+        posArray.append(posObj);
+    }
+    json["filePositions"] = posArray;
+
+    return json;
+}
+
+bool OpeningSuite::loadFromJson(const QJsonObject& json)
+{
+    if (json.isEmpty())
+        return false;
+
+    m_fileName = json["fileName"].toString();
+    m_fen = json["fen"].toString();
+    m_format = static_cast<Format>(json["format"].toInt());
+    m_order = static_cast<Order>(json["order"].toInt());
+    m_startIndex = json["startIndex"].toInt();
+    m_gameIndex = json["gameIndex"].toInt();
+    m_gamesRead = json["gamesRead"].toInt();
+
+    m_filePositions.clear();
+    QJsonArray posArray = json["filePositions"].toArray();
+    for (int i = 0; i < posArray.size(); ++i)
+    {
+        QJsonObject posObj = posArray[i].toObject();
+        m_filePositions.append({posObj["pos"].toVariant().toLongLong(), 
+                                posObj["line"].toVariant().toLongLong()});
+    }
+
+    if (m_fileName.isEmpty())
+        return true;
+
+    m_file = new QFile(m_fileName);
+    if (!m_file->open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        delete m_file;
+        m_file = nullptr;
+        return false;
+    }
+
+    if (m_format == EpdFormat)
+    {
+        m_epdStream = new QTextStream(m_file);
+    }
+    else if (m_format == PgnFormat)
+    {
+        m_pgnStream = new PgnStream(m_file);
+    }
+
+    return true;
 }

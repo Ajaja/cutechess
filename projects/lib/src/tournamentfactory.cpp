@@ -38,41 +38,65 @@ Tournament* TournamentFactory::create(const QString& type,
 	return nullptr;
 }
 
-// Tournament* TournamentFactory::load(const QJsonObject& json, GameManager* gameManager, QObject* parent)
-// {
-//     QString type = json["type"].toString();
-//     Tournament* tournament = create(type, gameManager, parent);
+Tournament* TournamentFactory::load(const QJsonObject& json, GameManager* gameManager, QObject* parent)
+{
+    QString type = json["type"].toString();
+    Tournament* tournament = create(type, gameManager, parent);
 
-//     if (!tournament) {
-//         qWarning() << "TournamentFactory: JSON missing 'type' field.";
-//         return nullptr;
-//     }
+    if (!tournament) {
+        qWarning() << "TournamentFactory: JSON missing 'type' field.";
+        return nullptr;
+    }
 
-//     // 3. Populate the instance with data
-//     if (!tournament->loadFromJson(json)) {
-//         qWarning() << "TournamentFactory: Failed to deserialize tournament data.";
-//         delete tournament;
-//         return nullptr;
-//     }
+    // 3. Populate the instance with data
+    if (!tournament->loadFromJson(json)) {
+        qWarning() << "TournamentFactory: Failed to deserialize tournament data.";
+        delete tournament;
+        return nullptr;
+    }
 
-//     return tournament;
-// }
+    return tournament;
+}
 
-// Tournament* TournamentFactory::loadFromFile(const QString& filePath, GameManager* gameManager, QObject* parent)
-// {
-//     QFile file(filePath);
-//     if (!file.open(QIODevice::ReadOnly)) {
-//         qWarning() << "TournamentFactory: Could not open file" << filePath;
-//         return nullptr;
-//     }
+Tournament* TournamentFactory::loadFromFile(const QString& filePath, GameManager* gameManager, QObject* parent)
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "TournamentFactory: Could not open file " << filePath;
+        return nullptr;
+    }
 
-//     QByteArray data = file.readAll();
-//     QJsonDocument doc = QJsonDocument::fromJson(data);
+    QByteArray data = file.readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(data);
 
-//     if (doc.isNull() || !doc.isObject()) {
-//         qWarning() << "TournamentFactory: Invalid JSON in file" << filePath;
-//         return nullptr;
-//     }
+    if (doc.isNull() || !doc.isObject()) {
+        qWarning() << "TournamentFactory: Invalid JSON in file " << filePath;
+        return nullptr;
+    }
 
-//     return load(doc.object(), gameManager, parent);
-// }
+    return load(doc.object(), gameManager, parent);
+}
+
+void TournamentFactory::storeToFile(const QString& filePath, Tournament* tournament)
+{
+    if (!tournament) {
+        qWarning() << "TournamentFactory: Cannot store a null tournament.";
+        return;
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        qWarning() << "TournamentFactory: Could not open file for writing: " << filePath;
+        return;
+    }
+
+    QJsonObject json = tournament->toJson(); 
+    
+    QJsonDocument doc(json);
+
+    if (file.write(doc.toJson()) == -1) {
+        qWarning() << "TournamentFactory: Failed to write data to " << filePath;
+    }
+
+    file.close();
+}

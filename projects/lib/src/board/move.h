@@ -77,7 +77,6 @@ class Move
 		/*! Returns true if \a other is different from this move. */
 		bool operator!=(const Move& other) const;
 
-	private:
 		quint32 m_data;
 };
 

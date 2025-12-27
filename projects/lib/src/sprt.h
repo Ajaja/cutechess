@@ -19,6 +19,8 @@
 #ifndef SPRT_H
 #define SPRT_H
 
+#include <QJsonObject>
+
 /*!
  * \brief A Sequential Probability Ratio Test
  *
@@ -87,6 +89,9 @@ class LIB_EXPORT Sprt
 		 * check if H0 or H1 can be accepted.
 		 */
 		void addGameResult(GameResult result);
+
+		QJsonObject toJson() const;
+		bool loadFromJson(const QJsonObject& json);
 
 	private:
 		double m_elo0;
