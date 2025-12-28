@@ -827,7 +827,8 @@ void Tournament::onGameFinished(ChessGame* game)
 	delete data;
 	game->deleteLater();
 
-	saveTournament();
+	if (!m_stopping)
+		saveTournament();
 }
 
 void Tournament::onGameDestroyed(ChessGame* game)

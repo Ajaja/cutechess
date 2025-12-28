@@ -79,9 +79,12 @@ CuteChessApplication::CuteChessApplication(int& argc, char* argv[])
 	QCoreApplication::setApplicationVersion(CUTECHESS_VERSION);
 
 	// Use Ini format on all platforms
+	QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, QCoreApplication::applicationDirPath() + "/cutechess-config");
+	qDebug() << QCoreApplication::applicationDirPath();
 	QSettings::setDefaultFormat(QSettings::IniFormat);
 
 	// Load the engines
+	qDebug() << configPath();
 	engineManager()->loadEngines(configPath() + QLatin1String("/engines.json"));
 
 	// Read the game database state

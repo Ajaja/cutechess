@@ -51,6 +51,7 @@ class EvalWidget : public QWidget
 		enum StatHeaders
 		{
 			NpsHeader,
+			DecisionTimeHeader,
 			HashHeader,
 			PonderMoveHeader,
 			PonderHitHeader,
