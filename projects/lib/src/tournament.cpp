@@ -17,6 +17,7 @@
 
 
 #include "tournament.h"
+#include <QDir>
 #include <QFile>
 #include <QMultiMap>
 #include <QSet>
@@ -116,6 +117,8 @@ Tournament::~Tournament()
 		qWarning("Tournament: Destroyed while games are still running.");
 
 	qDeleteAll(m_gameData);
+	m_gameOpenings.clear();
+	m_gameRounds.clear();
 	qDeleteAll(m_pairs);
 
 	QSet<const OpeningBook*> books;
@@ -485,6 +488,8 @@ void Tournament::startGame(TournamentPair* pair)
 	data->whiteIndex = m_pair->firstPlayer();
 	data->blackIndex = m_pair->secondPlayer();
 	m_gameData[game] = data;
+	m_gameOpenings[game] = QPair(game->startingFen(), game->moves());
+	m_gameRounds[game] = m_round;
 
 	// Some tournament types may require more games than expected
 	if (m_nextGameNumber > m_finalGameCount)
@@ -745,6 +750,8 @@ void Tournament::onGameFinished(ChessGame* game)
 	m_finishedGameCount++;
 
 	GameData* data = m_gameData.take(game);
+	m_gameOpenings.take(game);
+	m_gameRounds.take(game);
 	int gameNumber = data->number;
 	Sprt::GameResult sprtResult = Sprt::NoResult;
 
@@ -819,6 +826,8 @@ void Tournament::onGameFinished(ChessGame* game)
 
 	delete data;
 	game->deleteLater();
+
+	saveTournament();
 }
 
 void Tournament::onGameDestroyed(ChessGame* game)
@@ -837,6 +846,8 @@ void Tournament::onGameStartFailed(ChessGame* game)
 	delete game->pgn();
 	game->deleteLater();
 	m_gameData.remove(game);
+	m_gameOpenings.remove(game);
+	m_gameRounds.remove(game);
 
 	stop();
 }
@@ -865,6 +876,8 @@ void Tournament::start()
 		setOpeningRepetitions(INT_MAX);
 
 	m_gameData.clear();
+	m_gameOpenings.clear();
+	m_gameRounds.clear();
 	m_pgnGames.clear();
 	m_startFen.clear();
 	m_openingMoves.clear();
@@ -1239,6 +1252,35 @@ QJsonObject Tournament::toJson() const
     }
 	json["pairs"] = pairs;
 
+	json["pair"] = m_pair->toJson();
+
+	QJsonArray runningGames;
+	QMapIterator<ChessGame*, GameData*> i5(m_gameData);
+	while (i5.hasNext()) {
+		i5.next();
+		QJsonObject obj;
+		auto gameData = m_gameData[i5.key()];
+		auto openingData = m_gameOpenings[i5.key()];
+
+		obj["startingFen"] = openingData.first;
+
+		QJsonObject gameDataObj;
+		gameDataObj["number"] = gameData->number;
+		gameDataObj["whiteIndex"] = gameData->whiteIndex;
+		gameDataObj["blackIndex"] = gameData->blackIndex;
+		obj["gameData"] = gameDataObj;
+
+		QJsonArray openingMoves;
+		for (Chess::Move m : openingData.second) {
+			openingMoves.append(qint64(m.m_data));
+		}
+		obj["openingMoves"] = openingMoves;
+		obj["round"] = m_gameRounds[i5.key()];
+
+		runningGames.append(obj);
+	}
+	json["runningGames"] = runningGames;
+
 	QJsonObject pgnGames;
 	QMapIterator<int, PgnGame> i2(m_pgnGames);
 	while (i2.hasNext()) {
@@ -1286,6 +1328,27 @@ QJsonObject Tournament::toJson() const
     }
 
     return json;
+}
+
+void Tournament::saveTournament()
+{
+	QString filePath = QDir::homePath() + "/checkpoint.trnmt";
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        qWarning() << "Tournament::saveTournament(): Could not open file for writing: " << filePath;
+        return;
+    }
+
+    QJsonObject json = this->toJson(); 
+    
+    QJsonDocument doc(json);
+
+    if (file.write(doc.toJson()) == -1) {
+        qWarning() << "Tournament::saveTournament(): Failed to write data to " << filePath;
+    }
+
+    file.close();
 }
 
 bool Tournament::loadFromJson(const QJsonObject &json)
@@ -1336,6 +1399,11 @@ bool Tournament::loadFromJson(const QJsonObject &json)
 		m_pairs[key2] = pair;
 	}
 
+	if (m_pair)
+		delete m_pair;
+	m_pair = new TournamentPair;
+	m_pair->loadFromJson(json["pair"].toObject());
+
 	m_pgnGames.clear();
 	for (const QString key : json["pgnGames"].toObject().keys()) {
 		int keyInt = key.toInt();
@@ -1373,6 +1441,65 @@ bool Tournament::loadFromJson(const QJsonObject &json)
     if (json.contains("epdOutputPath")) {
         setEpdOutput(json["epdOutputPath"].toString());
     }
+
+	m_gameOpenings.clear();
+	qDeleteAll(m_gameData);
+	for (QJsonValueRef data : json["runningGames"].toArray()) {
+		QString startingFen = data.toObject()["startingFen"].toString();
+		QVector<Chess::Move> openingMoves;
+		for (QJsonValueRef data2 : data.toObject()["openingMoves"].toArray()) {
+			Chess::Move move;
+			move.m_data = data2.toInt();
+			openingMoves.append(move);
+		}
+		QJsonObject dataObj = data.toObject()["gameData"].toObject();
+		GameData* gameData = new GameData;
+		gameData->number = dataObj["number"].toInt();
+		gameData->whiteIndex = dataObj["whiteIndex"].toInt();
+		gameData->blackIndex = dataObj["blackIndex"].toInt();
+		int round = data.toObject()["round"].toInt();
+
+		// start a game with these settings
+		const TournamentPlayer& white = m_players[gameData->whiteIndex];
+		const TournamentPlayer& black = m_players[gameData->blackIndex];
+
+		Chess::Board* board = Chess::BoardFactory::create(m_variant);
+		ChessGame* game = new ChessGame(board, new PgnGame());
+
+		connect(game, SIGNAL(started(ChessGame*)),
+			this, SLOT(onGameStarted(ChessGame*)));
+		connect(game, SIGNAL(finished(ChessGame*)),
+			this, SLOT(onGameFinished(ChessGame*)));
+		
+		game->setTimeControl(white.timeControl(), Chess::Side::White);
+		game->setTimeControl(black.timeControl(), Chess::Side::Black);
+
+		game->setOpeningBook(white.book(), Chess::Side::White, white.bookDepth());
+		game->setOpeningBook(black.book(), Chess::Side::Black, black.bookDepth());
+
+		game->setStartingFen(startingFen);
+		game->setMoves(openingMoves);
+
+		game->pgn()->setEvent(m_name);
+		game->pgn()->setSite(m_site);
+		game->pgn()->setRound(round);
+
+		game->setAdjudicator(m_adjudicator);
+
+		m_gameData[game] = gameData;
+		m_gameOpenings[game] = QPair(game->startingFen(), game->moves());
+
+		auto whiteBuilder = white.builder();
+		auto blackBuilder = black.builder();
+		onGameAboutToStart(game, whiteBuilder, blackBuilder);
+		connect(game, SIGNAL(startFailed(ChessGame*)),
+			this, SLOT(onGameStartFailed(ChessGame*)));
+		m_gameManager->newGame(game,
+				whiteBuilder,
+				blackBuilder,
+				GameManager::Enqueue,
+				GameManager::ReusePlayers);
+	}
 
 	connect(m_gameManager, SIGNAL(ready()),
 		this, SLOT(startNextGame()));

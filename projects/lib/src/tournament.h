@@ -342,6 +342,7 @@ class LIB_EXPORT Tournament : public QObject
 
 		virtual QJsonObject toJson() const;
 		virtual bool loadFromJson(const QJsonObject& json);
+		void saveTournament();
 
 	public slots:
 		/*! Starts the tournament. */
@@ -748,6 +749,8 @@ class LIB_EXPORT Tournament : public QObject
 		QList<TournamentPlayer> m_players;
 		QMap<int, PgnGame> m_pgnGames;
 		QMap<ChessGame*, GameData*> m_gameData;
+		QMap<ChessGame*, QPair<QString, QVector<Chess::Move>>> m_gameOpenings;
+		QMap<ChessGame*, int> m_gameRounds;
 		QVector<Chess::Move> m_openingMoves;
 		QMap<int, QString> m_headerMap;
 };

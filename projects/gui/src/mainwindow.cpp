@@ -347,9 +347,9 @@ void MainWindow::createMenus()
 	m_tournamentMenu = menuBar()->addMenu(tr("&Tournament"));
 	m_tournamentMenu->addAction(m_newTournamentAct);
 	m_tournamentMenu->addAction(m_loadTournamentAct);
-	m_tournamentMenu->addAction(m_saveTournamentAct);
-	m_tournamentMenu->addAction(m_continueTournamentAc);
-	m_tournamentMenu->addAction(m_pauseTournamentAct);
+	// m_tournamentMenu->addAction(m_saveTournamentAct);
+	// m_tournamentMenu->addAction(m_continueTournamentAc);
+	// m_tournamentMenu->addAction(m_pauseTournamentAct);
 	m_tournamentMenu->addAction(m_stopTournamentAct);
 	m_tournamentMenu->addAction(m_showTournamentResultsAct);
 	m_continueTournamentAc->setEnabled(false);
