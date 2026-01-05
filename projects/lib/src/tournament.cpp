@@ -1236,6 +1236,7 @@ QJsonObject Tournament::toJson() const
     json["reverseSides"] = m_reverseSides;
     json["resultFormat"] = m_resultFormat;
     json["startFen"] = m_startFen;
+    json["savePath"] = m_savePath;
 
 	json["adjudicator"] = m_adjudicator.toJson();
 	json["openingSuite"] = m_openingSuite->toJson();
@@ -1331,13 +1332,21 @@ QJsonObject Tournament::toJson() const
     return json;
 }
 
+void Tournament::setSavePath(const QString path) {
+	m_savePath = path;
+}
+
+#include <mutex>
+
+std::mutex save_mutex;
+
 void Tournament::saveTournament()
 {
-	QString filePath = QDir::homePath() + "/checkpoint.trnmt";
+	const std::lock_guard<std::mutex> lock(save_mutex);
 
-    QFile file(filePath);
+    QFile file(m_savePath);
     if (!file.open(QIODevice::WriteOnly)) {
-        qWarning() << "Tournament::saveTournament(): Could not open file for writing: " << filePath;
+        qWarning() << "Tournament::saveTournament(): Could not open file for writing: " << m_savePath;
         return;
     }
 
@@ -1346,7 +1355,7 @@ void Tournament::saveTournament()
     QJsonDocument doc(json);
 
     if (file.write(doc.toJson()) == -1) {
-        qWarning() << "Tournament::saveTournament(): Failed to write data to " << filePath;
+        qWarning() << "Tournament::saveTournament(): Failed to write data to " << m_savePath;
     }
 
     file.close();
@@ -1374,6 +1383,7 @@ bool Tournament::loadFromJson(const QJsonObject &json)
     m_reverseSides = json["reverseSides"].toBool();
     m_resultFormat = json["resultFormat"].toString();
 	m_startFen = json["startFen"].toString();
+	m_savePath = json["savePath"].toString();
 
     m_round = json["currentRound"].toInt();
     m_oldRound = json["oldRound"].toInt();

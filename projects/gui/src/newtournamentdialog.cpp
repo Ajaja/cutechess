@@ -82,6 +82,15 @@ NewTournamentDialog::NewTournamentDialog(EngineManager* engineManager,
 		moveEngine(1);
 	});
 
+	connect(ui->m_browseSavepathBtn, &QPushButton::clicked, this, [=]()
+	{
+		auto dlg = new QFileDialog(this, tr("Select tournament save file"),
+			QString(), tr("Tournament save file (*.trnmt)"));
+		connect(dlg, &QFileDialog::fileSelected, ui->m_savepathEdit, &QLineEdit::setText);
+		dlg->setAttribute(Qt::WA_DeleteOnClose);
+		dlg->setAcceptMode(QFileDialog::AcceptSave);
+		dlg->open();
+	});
 	connect(ui->m_browsePgnoutBtn, &QPushButton::clicked, this, [=]()
 	{
 		auto dlg = new QFileDialog(this, tr("Select PGN output file"),
@@ -331,6 +340,8 @@ Tournament* NewTournamentDialog::createTournament(GameManager* gameManager) cons
 
 	auto t = TournamentFactory::create(
 		ts->tournamentType(), gameManager, parent());
+
+	t->setSavePath(ui->m_savepathEdit->text());
 
 	t->setPgnCleanupEnabled(false);
 	t->setName(ui->m_nameEdit->text());

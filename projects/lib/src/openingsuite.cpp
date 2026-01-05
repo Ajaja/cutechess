@@ -373,5 +373,32 @@ bool OpeningSuite::loadFromJson(const QJsonObject& json)
         m_pgnStream = new PgnStream(m_file);
     }
 
+	if (m_order == SequentialOrder)
+	{
+		for (int i = 0; i < m_gamesRead; i++)
+		{
+			FilePosition pos;
+			if (m_format == EpdFormat)
+			{
+				pos = getEpdPos();
+				if (m_epdStream->atEnd())
+				{
+					qWarning("Start index larger than book size, wrapping after %d.", i + 1);
+					m_epdStream->seek(0);
+					m_epdStream->resetStatus();
+                                }
+			}
+			else if (m_format == PgnFormat)
+			{
+				pos = getPgnPos();
+				if (!m_pgnStream->nextGame())
+				{
+					qWarning("Start index larger than book size, wrapping after %d.", i + 1);
+					m_pgnStream->rewind();
+				}
+			}
+		}
+	}
+
     return true;
 }
