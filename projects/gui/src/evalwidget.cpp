@@ -36,6 +36,7 @@ EvalWidget::EvalWidget(QWidget *parent)
 	auto hHeader = m_statsTable->horizontalHeader();
 	auto vHeader = m_statsTable->verticalHeader();
 	vHeader->hide();
+	vHeader->setDefaultSectionSize(20);
 	int maxHeight = hHeader->sizeHint().height() + vHeader->defaultSectionSize();
 	m_statsTable->setMaximumHeight(maxHeight);
 
@@ -51,6 +52,7 @@ EvalWidget::EvalWidget(QWidget *parent)
 
 	m_pvTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	m_pvTable->verticalHeader()->hide();
+	m_pvTable->verticalHeader()->setDefaultSectionSize(20);
 
 	QStringList pvHeaders;
 	pvHeaders << tr("Depth") << tr("Time") << tr("Nodes")

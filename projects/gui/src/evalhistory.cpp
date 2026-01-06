@@ -136,8 +136,8 @@ void EvalHistory::addData(int ply, int score)
 	if (side == 1)
 		y = -y;
 
-	m_minScore = std::min(m_minScore, int(1.1 * y));
-	m_maxScore = std::max(m_maxScore, int(1.1 * y));
+	m_minScore = std::min(m_minScore, 1.1 * y);
+	m_maxScore = std::max(m_maxScore, 1.1 * y);
 
 	m_plot->graph(side)->addData(x, y);
 }
@@ -159,7 +159,7 @@ void EvalHistory::replot(int maxPly)
 		ticker->setTickStep(double(step));
 
 		m_plot->rescaleAxes();
-		m_plot->yAxis->setRange(m_minScore - 1, m_maxScore + 1);
+		m_plot->yAxis->setRange(m_minScore - 0.5, m_maxScore + 0.5);
 	}
 	m_plot->replot();
 }
