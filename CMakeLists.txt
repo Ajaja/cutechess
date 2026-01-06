@@ -16,7 +16,7 @@ endif()
 
 option(WITH_TESTS "Enable building of unit tests" ON)
 
-option(USE_UBSAN "Enable Undefined Behavior Sanitizer" ON)
+option(USE_UBSAN "Enable Undefined Behavior Sanitizer" OFF)
 
 if(USE_UBSAN)
     if(MSVC)
