@@ -127,7 +127,8 @@ void GraphicsBoard::paint(QPainter* painter,
 	}
 
 	auto font = painter->font();
-	font.setPointSizeF(font.pointSizeF() * 0.7);
+	auto intendedFontSize = font.pointSizeF() * 0.7;
+	font.setPointSizeF(font.pointSizeF() * 0.9);
 	painter->setFont(font);
 	painter->setPen(m_textColor);
 
@@ -164,6 +165,9 @@ void GraphicsBoard::paint(QPainter* painter,
 			painter->drawText(rect, Qt::AlignCenter, num);
 		}
 	}
+
+	font.setPointSizeF(intendedFontSize);
+	painter->setFont(font);
 }
 
 Chess::Square GraphicsBoard::squareAt(const QPointF& point) const

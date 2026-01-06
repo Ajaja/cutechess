@@ -1091,8 +1091,8 @@ QString StandardBoard::infoGuiString() const
 	}
 
 	QString result;
-	result += "50-move rule: " + QString::number(reversibleMoveCount()) + "           |           ";
-	result += "Material: " + QString::number(material[0] - material[1]) + "           |           ";
+	result += "50-move rule: " + QString::number(reversibleMoveCount()) + "        |        ";
+	result += "Material: " + QString::number(material[0] - material[1]) + "        |        ";
 	result += "Piece count: " + QString::number(pieceCount);
 	return result;
 }
