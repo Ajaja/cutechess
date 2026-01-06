@@ -325,6 +325,13 @@ void MainWindow::createActions()
 
 void MainWindow::createMenus()
 {
+	menuBar()->setStyleSheet(
+		"QMenuBar::item {"
+		"   padding: 2px 6px;"
+		"   margin: 1px;"
+		"}"
+	);
+
 	m_gameMenu = menuBar()->addMenu(tr("&Game"));
 	m_gameMenu->addAction(m_newGameAct);
 	m_gameMenu->addSeparator();
