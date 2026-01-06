@@ -29,7 +29,9 @@ EvalHistory::EvalHistory(QWidget *parent)
 	: QWidget(parent),
 	  m_plot(new QCustomPlot(this)),
 	  m_game(nullptr),
-	  m_invertSides(false)
+	  m_invertSides(false),
+	  m_minScore(0),
+	  m_maxScore(0)
 {
 	auto x = m_plot->xAxis;
 	auto y = m_plot->yAxis;
@@ -92,6 +94,8 @@ void EvalHistory::setPgnGame(PgnGame* pgn)
 
 void EvalHistory::setScores(const QMap< int, int >& scores)
 {
+	m_minScore = m_maxScore = 0;
+
 	m_plot->addGraph();
 	m_plot->addGraph();
 
@@ -132,6 +136,9 @@ void EvalHistory::addData(int ply, int score)
 	if (side == 1)
 		y = -y;
 
+	m_minScore = std::min(m_minScore, int(1.1 * y));
+	m_maxScore = std::max(m_maxScore, int(1.1 * y));
+
 	m_plot->graph(side)->addData(x, y);
 }
 
@@ -150,7 +157,9 @@ void EvalHistory::replot(int maxPly)
 		auto ticker = m_plot->xAxis->ticker().dynamicCast<QCPAxisTickerFixed>();
 		Q_ASSERT(!ticker.isNull());
 		ticker->setTickStep(double(step));
+
 		m_plot->rescaleAxes();
+		m_plot->yAxis->setRange(m_minScore - 1, m_maxScore + 1);
 	}
 	m_plot->replot();
 }
