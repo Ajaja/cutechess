@@ -99,9 +99,6 @@ QJsonObject RoundRobinTournament::toJson() const
 
 bool RoundRobinTournament::loadFromJson(const QJsonObject& json)
 {
-    if (!Tournament::loadFromJson(json))
-        return false;
-
     m_pairNumber = json["pairNumber"].toInt();
 
     m_topHalf.clear();
@@ -111,6 +108,8 @@ bool RoundRobinTournament::loadFromJson(const QJsonObject& json)
     m_bottomHalf.clear();
     QJsonArray bottomArray = json["bottomHalf"].toArray();
     for (auto val : bottomArray) m_bottomHalf.append(val.toInt());
+
+	Tournament::loadFromJson(json);
 
     return true;
 }
