@@ -23,14 +23,16 @@
 #include <QVBoxLayout>
 #include <QVector>
 #include <QTime>
+#include <QSettings>
 #include <chessplayer.h>
 
-EvalWidget::EvalWidget(QWidget *parent)
+EvalWidget::EvalWidget(QString name, QWidget *parent)
 	: QWidget(parent),
 	  m_player(nullptr),
 	  m_statsTable(new QTableWidget(1, 6, this)),
 	  m_pvTable(new QTableWidget(0, 5, this)),
-	  m_depth(-1)
+	  m_depth(-1),
+	  m_name(name)
 {
 	m_statsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	auto hHeader = m_statsTable->horizontalHeader();
@@ -59,7 +61,7 @@ EvalWidget::EvalWidget(QWidget *parent)
 		  << tr("Score") << tr("PV");
 	m_pvTable->setHorizontalHeaderLabels(pvHeaders);
 	m_pvTable->setColumnWidth(0, 60);
-	m_pvTable->setColumnWidth(1, 100);
+	m_pvTable->setColumnWidth(1, 60);
 	m_pvTable->setColumnWidth(2, 100);
 	m_pvTable->setColumnWidth(3, 60);
 	m_pvTable->horizontalHeader()->setStretchLastSection(true);
@@ -70,6 +72,12 @@ EvalWidget::EvalWidget(QWidget *parent)
 	layout->addWidget(m_pvTable);
 	layout->setContentsMargins(0, 0, 0, 0);
 	setLayout(layout);
+
+	loadSettings();
+}
+
+EvalWidget::~EvalWidget() {
+	saveSettings();
 }
 
 void EvalWidget::clear()
@@ -95,6 +103,30 @@ void EvalWidget::setPlayer(ChessPlayer* player)
 		this, SLOT(clear()));
 	connect(player, SIGNAL(thinking(MoveEvaluation)),
 		this, SLOT(onEval(MoveEvaluation)));
+}
+
+void EvalWidget::saveSettings()
+{
+    QSettings settings;
+	settings.beginGroup("ui");
+	settings.beginGroup("evalwidget");
+
+    settings.setValue(m_name, m_pvTable->horizontalHeader()->saveState());
+
+    settings.endGroup();
+}
+
+void EvalWidget::loadSettings()
+{
+    QSettings settings;
+    settings.beginGroup("ui");
+	settings.beginGroup("evalwidget");
+    
+    if (settings.contains(m_name)) {
+        m_pvTable->horizontalHeader()->restoreState(settings.value(m_name).toByteArray());
+    }
+
+    settings.endGroup();
 }
 
 void EvalWidget::onEval(const MoveEvaluation& eval)
@@ -175,7 +207,7 @@ void EvalWidget::onEval(const MoveEvaluation& eval)
 	      << new QTableWidgetItem(time)
 	      << new QTableWidgetItem(nodeCount)
 	      << new QTableWidgetItem(score)
-	      << new QTableWidgetItem(eval.pv());
+	      << new QTableWidgetItem(eval.moveNumberInfo() + eval.pv());
 
 	for (int i = 0; i < 4; i++)
 		items[i]->setTextAlignment(Qt::AlignVCenter | Qt::AlignRight);

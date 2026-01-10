@@ -89,7 +89,7 @@ int GraphicsBoard::type() const
 
 QRectF GraphicsBoard::boundingRect() const
 {
-	const auto margins = QMarginsF(m_coordSize, m_coordSize,
+	const auto margins = QMarginsF(m_coordSize, 3 * m_coordSize / 4,
 				       m_coordSize, m_coordSize);
 	return m_rect.marginsAdded(margins);
 }

@@ -41,6 +41,8 @@ ChessClock::ChessClock(QWidget* parent)
 	m_timeLabel->setAlignment(Qt::AlignHCenter);
 
 	QVBoxLayout* layout = new QVBoxLayout();
+	layout->setContentsMargins(0, 0, 0, 0);
+	layout->setSpacing(0);
 	layout->addWidget(m_nameLabel);
 	layout->addWidget(m_timeLabel);
 	setLayout(layout);

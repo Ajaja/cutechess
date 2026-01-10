@@ -43,6 +43,9 @@ class LIB_EXPORT UciEngine : public ChessEngine
 		virtual void startPondering();
 		virtual void clearPonderState();
 
+		int calculateFullMoveNumber();
+		QString getMoveIndicatorString();
+
 	protected:
 		// Inherited from ChessEngine
 		virtual bool sendPing();

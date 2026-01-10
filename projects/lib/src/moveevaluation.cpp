@@ -26,6 +26,7 @@ MoveEvaluation::MoveEvaluation()
 	  m_score(NULL_SCORE),
 	  m_time(0),
 	  m_decisionTime(0),
+	  m_moveNumberInfo(""),
 	  m_pvNumber(0),
 	  m_hashUsage(0),
 	  m_ponderhitRate(0),
@@ -44,6 +45,7 @@ bool MoveEvaluation::operator==(const MoveEvaluation& other) const
 	&&  m_score == other.m_score
 	&&  m_time == other.m_time
 	&&  m_decisionTime == other.m_decisionTime
+	&&  m_moveNumberInfo == other.m_moveNumberInfo
 	&&  m_pvNumber == other.m_pvNumber
 	&&  m_hashUsage == other.m_hashUsage
 	&&  m_ponderhitRate == other.m_ponderhitRate
@@ -65,6 +67,7 @@ bool MoveEvaluation::operator!=(const MoveEvaluation& other) const
 	||  m_score != other.m_score
 	||  m_time != other.m_time
 	||  m_decisionTime != other.m_decisionTime
+	||  m_moveNumberInfo != other.m_moveNumberInfo
 	||  m_pvNumber != other.m_pvNumber
 	||  m_hashUsage != other.m_hashUsage
 	||  m_ponderhitRate != other.m_ponderhitRate
@@ -84,6 +87,7 @@ bool MoveEvaluation::isEmpty() const
 	&&  m_score == NULL_SCORE
 	&&  m_time < 500
 	&&  m_decisionTime == 0
+	&&  m_moveNumberInfo.isEmpty()
 	&&  m_pvNumber == 0
 	&&  m_hashUsage == 0
 	&&  m_ponderhitRate == 0
@@ -160,6 +164,11 @@ int MoveEvaluation::decisionTime() const
 	return m_decisionTime;
 }
 
+QString MoveEvaluation::moveNumberInfo() const
+{
+	return m_moveNumberInfo;
+}
+
 quint64 MoveEvaluation::nodeCount() const
 {
 	return m_nodeCount;
@@ -215,6 +224,7 @@ void MoveEvaluation::clear()
 	m_score = NULL_SCORE;
 	m_time = 0;
 	m_decisionTime = 0;
+	m_moveNumberInfo.clear();
 	m_pvNumber = 0;
 	m_nodeCount = 0;
 	m_nps = 0;
@@ -258,6 +268,11 @@ void MoveEvaluation::setTime(int time)
 void MoveEvaluation::setDecisionTime(int time)
 {
 	m_decisionTime = time;
+}
+
+void MoveEvaluation::setMoveNumberInfo(QString time)
+{
+	m_moveNumberInfo = time;
 }
 
 void MoveEvaluation::setNodeCount(quint64 nodeCount)
@@ -343,4 +358,6 @@ void MoveEvaluation::merge(const MoveEvaluation& other)
 		m_time = other.m_time;
 	if (other.m_decisionTime)
 		m_decisionTime = other.m_decisionTime;
+	if (!other.m_moveNumberInfo.isEmpty())
+		m_moveNumberInfo = other.m_moveNumberInfo;
 }

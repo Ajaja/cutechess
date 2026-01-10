@@ -91,6 +91,8 @@ class LIB_EXPORT MoveEvaluation
 		/*! Move decision time in milliseconds */
 		int decisionTime() const;
 
+		QString moveNumberInfo() const;
+
 		/*!
 		 * How many nodes were searched?
 		 * \note For human players this is always 0.
@@ -166,6 +168,8 @@ class LIB_EXPORT MoveEvaluation
 		/*! Sets the decision time to \a time. */
 		void setDecisionTime(int time);
 
+		void setMoveNumberInfo(QString moveNumberInfo);
+
 		/*! Sets the node count to \a nodeCount. */
 		void setNodeCount(quint64 nodeCount);
 
@@ -213,6 +217,7 @@ class LIB_EXPORT MoveEvaluation
 		QString m_pv;
 		QString m_ponderMove;
 		QString m_lastBestMove;
+		QString m_moveNumberInfo;
 };
 
 Q_DECLARE_METATYPE(MoveEvaluation)

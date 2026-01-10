@@ -37,7 +37,7 @@ EvalHistory::EvalHistory(QWidget *parent)
 	auto y = m_plot->yAxis;
 	auto ticker = new QCPAxisTickerFixed;
 
-	x->setLabel(tr("move"));
+	// x->setLabel(tr("move"));
 	x->setRange(1, 5);
 	x->setTicker(QSharedPointer<QCPAxisTicker>(ticker));
 	x->setSubTicks(false);
@@ -159,7 +159,7 @@ void EvalHistory::replot(int maxPly)
 		ticker->setTickStep(double(step));
 
 		m_plot->rescaleAxes();
-		m_plot->yAxis->setRange(m_minScore - 0.5, m_maxScore + 0.5);
+		m_plot->yAxis->setRange(m_minScore, m_maxScore);
 	}
 	m_plot->replot();
 }

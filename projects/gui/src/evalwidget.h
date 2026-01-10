@@ -35,13 +35,17 @@ class EvalWidget : public QWidget
 
 	public:
 		/*! Creates a new EvalWidget object. */
-		explicit EvalWidget(QWidget* parent = nullptr);
+		explicit EvalWidget(QString name, QWidget* parent = nullptr);
+		~EvalWidget();
 
 		/*!
 		 * Connects the widget to \a player and disconnects from
 		 * the previous player (if any).
 		 */
 		void setPlayer(ChessPlayer* player);
+
+		void saveSettings();
+    	void loadSettings();
 
 	private slots:
 		void clear();
@@ -62,7 +66,7 @@ class EvalWidget : public QWidget
 		QTableWidget* m_statsTable;
 		QTableWidget* m_pvTable;
 		int m_depth;
-		QString m_pv;
+		QString m_pv, m_name;
 };
 
 #endif // EVALWIDGET_H

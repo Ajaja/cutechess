@@ -535,29 +535,42 @@ void BoardScene::addMoveArrow(const QPointF& sourcePos,
 	QPolygonF arrow;
 	QLineF origline(sourcePos, targetPos);
 
-	float size = s_squareSize / 7.0;
-	float skew = size * 0.5;
-	float risex = 3;
-	float risey = 2;
-	float length = origline.length();
-	QColor color;
+	// float size = s_squareSize / 7.0;
+	// float skew = size * 0.5;
+	// float risex = 3;
+	// float risey = 2;
+	// float length = origline.length();
+	QColor color = UIThemeManager::instance().currentTheme().m_arrow;
 
-	color = UIThemeManager::instance().currentTheme().m_arrow;
+	// arrow << QPointF(            0,             0);
+	// arrow << QPointF(-risex * size,  risey * size);
+	// arrow << QPointF(-risex * size,          skew);
+	// arrow << QPointF(      -length,          skew);
+	// arrow << QPointF(      -length,         -skew);
+	// arrow << QPointF(-risex * size,         -skew);
+	// arrow << QPointF(-risex * size, -risey * size);
 
-	arrow << QPointF(            0,             0);
-	arrow << QPointF(-risex * size,  risey * size);
-	arrow << QPointF(-risex * size,          skew);
-	arrow << QPointF(      -length,          skew);
-	arrow << QPointF(      -length,         -skew);
-	arrow << QPointF(-risex * size,         -skew);
-	arrow << QPointF(-risex * size, -risey * size);
+	// QGraphicsPolygonItem* item = new QGraphicsPolygonItem(arrow);
+	// item->setPen(QPen(QBrush(color), 1));
+	// item->setBrush(color);
+	// item->setOpacity(0.5);
+	// item->setRotation(-origline.angle());
+	// item->setPos(targetPos);
 
-	QGraphicsPolygonItem* item = new QGraphicsPolygonItem(arrow);
-	item->setPen(QPen(QBrush(color), 1));
+	QLineF l1(sourcePos, targetPos);
+	QLineF l2(l1.normalVector());
+
+	l1.setLength(l1.length() - s_squareSize / 2.5);
+	l2.setLength(s_squareSize / 3.0);
+	l2.translate(l2.dx() / -2.0, l2.dy() / -2.0);
+
+	QPolygonF polygon;
+	polygon << l2.p1() << l1.p2() << l2.p2();
+
+	QGraphicsPolygonItem* item = new QGraphicsPolygonItem(polygon);
+	item->setPen(QPen(QBrush(color), 2));
 	item->setBrush(color);
-	item->setOpacity(0.5);
-	item->setRotation(-origline.angle());
-	item->setPos(targetPos);
+	item->setOpacity(0.6);
 
 	m_moveArrows->addToGroup(item);
 }

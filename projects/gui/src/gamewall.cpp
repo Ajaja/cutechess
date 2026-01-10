@@ -52,6 +52,7 @@ GameWallWidget::GameWallWidget(QWidget* parent)
 	: QWidget(parent)
 {
 	QHBoxLayout* clockLayout = new QHBoxLayout();
+	clockLayout->setContentsMargins(0, 0, 0, 0);
 	for (int i = 0; i < 2; i++)
 	{
 		m_players[i] = nullptr;
@@ -66,11 +67,14 @@ GameWallWidget::GameWallWidget(QWidget* parent)
 
 	m_scene = new BoardScene(this);
 	m_view = new BoardView(m_scene);
+	m_view->setFrameStyle(QFrame::NoFrame);
+	m_view->setContentsMargins(0, 0, 0, 0);
 
 	QVBoxLayout* mainLayout = new QVBoxLayout();
 	mainLayout->addLayout(clockLayout);
 	mainLayout->addWidget(m_view);
 	mainLayout->setContentsMargins(0, 0, 0, 0);
+	mainLayout->setSpacing(0);
 
 	setLayout(mainLayout);
 }

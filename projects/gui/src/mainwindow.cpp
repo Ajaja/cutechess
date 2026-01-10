@@ -105,8 +105,8 @@ MainWindow::MainWindow(ChessGame* game)
 	#endif
 
 	m_evalHistory = new EvalHistory(this);
-	m_evalWidgets[0] = new EvalWidget(this);
-	m_evalWidgets[1] = new EvalWidget(this);
+	m_evalWidgets[0] = new EvalWidget("player0", this);
+	m_evalWidgets[1] = new EvalWidget("player1", this);
 
 	QVBoxLayout* mainLayout = new QVBoxLayout();
 	mainLayout->addWidget(m_gameViewer);

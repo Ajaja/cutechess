@@ -9,7 +9,7 @@ struct UITheme {
     QColor m_darkSquare;
     QColor m_arrow;
 
-    UITheme(): m_lightSquare{0xff, 0xce, 0x9e}, m_darkSquare{0xd1, 0x8b, 0x47}, m_arrow{0, 170, 0} {}
+    UITheme(): m_lightSquare{0xff, 0xce, 0x9e}, m_darkSquare{0xd1, 0x8b, 0x47}, m_arrow{247, 193, 76} {}
     UITheme(QColor lightSquare, QColor darkSquare, QColor arrow): m_lightSquare{lightSquare}, m_darkSquare{darkSquare}, m_arrow{arrow} {}
 };
 
