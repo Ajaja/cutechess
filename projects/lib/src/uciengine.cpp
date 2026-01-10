@@ -505,7 +505,7 @@ QString UciEngine::getMoveIndicatorString()
     if (currentlyWhite) {
         return QString("%1. ").arg(n);
     } else {
-        return QString("... %1. ").arg(n);
+        return QString("%1... ").arg(n);
     }
 }
 
