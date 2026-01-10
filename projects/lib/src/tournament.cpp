@@ -1239,7 +1239,8 @@ QJsonObject Tournament::toJson() const
     json["savePath"] = m_savePath;
 
 	json["adjudicator"] = m_adjudicator.toJson();
-	json["openingSuite"] = m_openingSuite->toJson();
+	if (m_openingSuite)
+		json["openingSuite"] = m_openingSuite->toJson();
 	json["sprt"] = m_sprt->toJson();
 
 	QJsonObject pairs;
@@ -1395,8 +1396,10 @@ bool Tournament::loadFromJson(const QJsonObject &json)
 
 	m_adjudicator.loadFromJson(json["adjudicator"].toObject());
 	delete m_openingSuite;
-	m_openingSuite = new OpeningSuite("");
-	m_openingSuite->loadFromJson(json["openingSuite"].toObject());
+	if (json.contains("openingSuite")) {
+		m_openingSuite = new OpeningSuite("");
+		m_openingSuite->loadFromJson(json["openingSuite"].toObject());
+	}
 	m_sprt->loadFromJson(json["sprt"].toObject());
 
 	qDeleteAll(m_pairs);
@@ -1514,6 +1517,9 @@ bool Tournament::loadFromJson(const QJsonObject &json)
 
 	connect(m_gameManager, SIGNAL(ready()),
 		this, SLOT(startNextGame()));
+
+	if (json["runningGames"].toArray().size() == 0)
+		startNextGame();
 
     return true;
 }
