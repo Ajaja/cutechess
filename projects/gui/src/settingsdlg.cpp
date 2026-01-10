@@ -33,6 +33,7 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 	ui->m_gameSettings->enableSplitTimeControls(true);
 
 	ui->m_themeCombo->addItems(UIThemeManager::instance().getThemeList());
+	ui->m_colorThemeCombo->addItems({"Default (System)", "Light", "Dark"});
 
 	readSettings();
 
@@ -135,6 +136,11 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 		[=](const QString& variant)
 	{
 		QSettings().setValue("ui/theme", variant);
+	});
+	connect(ui->m_colorThemeCombo, &QComboBox::currentTextChanged,
+		[=](const QString& variant)
+	{
+		QSettings().setValue("ui/colorTheme", variant);
 	});
 
 	ui->m_gameSettings->onHumanCountChanged(0);
@@ -240,6 +246,8 @@ void SettingsDialog::readSettings()
 		s.value("move_animation_duration", 300).toInt());
 	int index = ui->m_themeCombo->findText(s.value("theme").toString());
 	ui->m_themeCombo->setCurrentIndex(index);
+	index = ui->m_colorThemeCombo->findText(s.value("colorTheme").toString());
+	ui->m_colorThemeCombo->setCurrentIndex(index);
 	s.endGroup();
 
 	s.beginGroup("pgn");

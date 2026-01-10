@@ -18,6 +18,8 @@
 
 #include "cutechessapp.h"
 
+#include <QGuiApplication>
+#include <QStyleHints>
 #include <QCoreApplication>
 #include <QDir>
 #include <QTime>
@@ -80,15 +82,19 @@ CuteChessApplication::CuteChessApplication(int& argc, char* argv[])
 
 	// Use Ini format on all platforms
 	QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, QCoreApplication::applicationDirPath() + "/cutechess-config");
-	qDebug() << QCoreApplication::applicationDirPath();
 	QSettings::setDefaultFormat(QSettings::IniFormat);
 
 	// Load the engines
-	qDebug() << configPath();
 	engineManager()->loadEngines(configPath() + QLatin1String("/engines.json"));
 
 	// Read the game database state
 	gameDatabaseManager()->readState(configPath() + QLatin1String("/gamedb.bin"));
+
+	QSettings s;
+	if (s.value("ui/colorTheme").toString() == "Dark")
+		QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
+	else if (s.value("ui/colorTheme").toString() == "Light")
+		QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
 
 	connect(this, SIGNAL(lastWindowClosed()), this, SLOT(onLastWindowClosed()));
 	connect(this, SIGNAL(aboutToQuit()), this, SLOT(onAboutToQuit()));
