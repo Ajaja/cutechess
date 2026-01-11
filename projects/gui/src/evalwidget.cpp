@@ -206,7 +206,7 @@ void EvalWidget::onEval(const MoveEvaluation& eval)
 	items << new QTableWidgetItem(depth)
 	      << new QTableWidgetItem(time)
 	      << new QTableWidgetItem(nodeCount)
-	      << new QTableWidgetItem(score)
+          << new QTableWidgetItem(score + "  ")
 	      << new QTableWidgetItem(eval.moveNumberInfo() + eval.pv());
 
 	for (int i = 0; i < 4; i++)
