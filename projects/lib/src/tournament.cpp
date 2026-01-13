@@ -500,6 +500,8 @@ void Tournament::startGame(TournamentPair* pair)
 	if (m_swapSides)
 		m_pair->swapPlayers();
 
+	saveTournament();
+
 	auto whiteBuilder = white.builder();
 	auto blackBuilder = black.builder();
 	onGameAboutToStart(game, whiteBuilder, blackBuilder);
@@ -826,9 +828,6 @@ void Tournament::onGameFinished(ChessGame* game)
 
 	delete data;
 	game->deleteLater();
-
-	if (!m_stopping)
-		saveTournament();
 }
 
 void Tournament::onGameDestroyed(ChessGame* game)
@@ -1517,9 +1516,6 @@ bool Tournament::loadFromJson(const QJsonObject &json)
 
 	connect(m_gameManager, SIGNAL(ready()),
 		this, SLOT(startNextGame()));
-
-	if (json["runningGames"].toArray().size() == 0)
-		startNextGame();
 
     return true;
 }
