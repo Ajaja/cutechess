@@ -488,7 +488,7 @@ void Tournament::startGame(TournamentPair* pair)
 	data->whiteIndex = m_pair->firstPlayer();
 	data->blackIndex = m_pair->secondPlayer();
 	m_gameData[game] = data;
-	m_gameOpenings[game] = QPair(game->startingFen(), game->moves());
+    m_gameOpenings[game] = qMakePair(game->startingFen(), game->moves());
 	m_gameRounds[game] = m_round;
 
 	// Some tournament types may require more games than expected
@@ -1500,7 +1500,7 @@ bool Tournament::loadFromJson(const QJsonObject &json)
 		game->setAdjudicator(m_adjudicator);
 
 		m_gameData[game] = gameData;
-		m_gameOpenings[game] = QPair(game->startingFen(), game->moves());
+        m_gameOpenings[game] = qMakePair(game->startingFen(), game->moves());
 
 		auto whiteBuilder = white.builder();
 		auto blackBuilder = black.builder();

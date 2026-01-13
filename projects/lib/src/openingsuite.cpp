@@ -318,16 +318,6 @@ QJsonObject OpeningSuite::toJson() const
     json["gameIndex"] = m_gameIndex;
     json["gamesRead"] = m_gamesRead;
 
-    QJsonArray posArray;
-    for (const FilePosition& fp : m_filePositions)
-    {
-        QJsonObject posObj;
-        posObj["pos"] = fp.pos;
-        posObj["line"] = fp.lineNumber;
-        posArray.append(posObj);
-    }
-    json["filePositions"] = posArray;
-
     return json;
 }
 
@@ -345,13 +335,6 @@ bool OpeningSuite::loadFromJson(const QJsonObject& json)
     m_gamesRead = json["gamesRead"].toInt();
 
     m_filePositions.clear();
-    QJsonArray posArray = json["filePositions"].toArray();
-    for (int i = 0; i < posArray.size(); ++i)
-    {
-        QJsonObject posObj = posArray[i].toObject();
-        m_filePositions.append({posObj["pos"].toVariant().toLongLong(), 
-                                posObj["line"].toVariant().toLongLong()});
-    }
 
     if (m_fileName.isEmpty())
         return true;
@@ -373,7 +356,38 @@ bool OpeningSuite::loadFromJson(const QJsonObject& json)
         m_pgnStream = new PgnStream(m_file);
     }
 
-	if (m_order == SequentialOrder)
+    if (m_order == RandomOrder)
+    {
+        // Create a vector of file positions
+        for (;;)
+        {
+            FilePosition pos;
+            if (m_format == EpdFormat)
+                pos = getEpdPos();
+            else if (m_format == PgnFormat)
+                pos = getPgnPos();
+            else
+                return false; // should be unreachable
+
+            if (pos.pos == -1)
+                break;
+
+            m_filePositions.append(pos);
+        }
+
+        // use a Knuth shuffle to generate a random permutation
+        for (int i = 0; i <= m_filePositions.size() - 2; i++)
+        {
+            int j = i + Mersenne::random() % (m_filePositions.size() - i);
+            std::swap(m_filePositions[i], m_filePositions[j]);
+        }
+
+        if (m_startIndex >= m_filePositions.size())
+            qWarning("Start index larger than book size, wrapping after %d.", m_filePositions.size());
+
+        m_gameIndex += m_startIndex % m_filePositions.size();
+    }
+    else if (m_order == SequentialOrder)
 	{
 		for (int i = 0; i < m_gamesRead; i++)
 		{

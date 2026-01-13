@@ -396,6 +396,14 @@ void NewTournamentDialog::readSettings()
 {
 	ui->m_siteEdit->setText(QSettings().value("pgn/site").toString());
 
+    QString savepath = ui->m_savepathEdit->text();
+    if (savepath.isEmpty())
+    {
+        savepath = QSettings().value("tournament/default_savepath",
+                                    QString()).toString();
+        ui->m_savepathEdit->setText(savepath);
+    }
+
 	QString pgnName = ui->m_pgnoutEdit->text();
 	if (pgnName.isEmpty())
 	{
