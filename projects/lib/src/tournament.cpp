@@ -19,6 +19,7 @@
 #include "tournament.h"
 #include <QDir>
 #include <QFile>
+#include <QJsonDocument>
 #include <QMultiMap>
 #include <QSet>
 #include "gamemanager.h"
