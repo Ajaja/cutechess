@@ -21,6 +21,7 @@
 #include "gauntlettournament.h"
 #include "knockouttournament.h"
 #include "pyramidtournament.h"
+#include <QJsonDocument>
 
 Tournament* TournamentFactory::create(const QString& type,
 				      GameManager* manager,
