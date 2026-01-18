@@ -469,17 +469,13 @@ void MainWindow::readSettings()
 	s.beginGroup("ui");
 	s.beginGroup("mainwindow");
 
-	restoreState(s.value("window_state").toByteArray());
 	restoreGeometry(s.value("geometry").toByteArray());
+	restoreState(s.value("window_state").toByteArray());
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 	// Workaround for https://bugreports.qt.io/browse/QTBUG-16252
 	if (isMaximized())
 		setGeometry(QApplication::desktop()->availableGeometry(this));
 #endif
-	if (s.value("window_maximized", false).toBool())
-        showMaximized();
-    else
-        showNormal();
 
 	s.endGroup();
 	s.endGroup();
