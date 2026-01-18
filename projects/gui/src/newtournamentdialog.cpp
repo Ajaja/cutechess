@@ -84,8 +84,11 @@ NewTournamentDialog::NewTournamentDialog(EngineManager* engineManager,
 
 	connect(ui->m_browseSavepathBtn, &QPushButton::clicked, this, [=]()
 	{
+		auto defaultPath = QSettings().value("tournament/default_savepath").toString();
+		if (defaultPath.isEmpty()) defaultPath = QCoreApplication::applicationDirPath();
+
 		auto dlg = new QFileDialog(this, tr("Select tournament save file"),
-			QString(), tr("Tournament save file (*.trnmt)"));
+			defaultPath, tr("Tournament save file (*.trnmt)"));
 		connect(dlg, &QFileDialog::fileSelected, ui->m_savepathEdit, &QLineEdit::setText);
 		dlg->setAttribute(Qt::WA_DeleteOnClose);
 		dlg->setAcceptMode(QFileDialog::AcceptSave);
@@ -93,8 +96,11 @@ NewTournamentDialog::NewTournamentDialog(EngineManager* engineManager,
 	});
 	connect(ui->m_browsePgnoutBtn, &QPushButton::clicked, this, [=]()
 	{
+		auto defaultPath = QSettings().value("tournament/default_pgn_output_file").toString();
+		if (defaultPath.isEmpty()) defaultPath = QCoreApplication::applicationDirPath();
+
 		auto dlg = new QFileDialog(this, tr("Select PGN output file"),
-			QString(), tr("Portable Game Notation (*.pgn)"));
+			defaultPath, tr("Portable Game Notation (*.pgn)"));
 		connect(dlg, &QFileDialog::fileSelected, ui->m_pgnoutEdit, &QLineEdit::setText);
 		dlg->setAttribute(Qt::WA_DeleteOnClose);
 		dlg->setAcceptMode(QFileDialog::AcceptSave);
@@ -102,8 +108,11 @@ NewTournamentDialog::NewTournamentDialog(EngineManager* engineManager,
 	});
 	connect(ui->m_browseEpdoutBtn, &QPushButton::clicked, this, [=]()
 	{
+		auto defaultPath = QSettings().value("tournament/default_epd_output_file").toString();
+		if (defaultPath.isEmpty()) defaultPath = QCoreApplication::applicationDirPath();
+
 		auto dlg = new QFileDialog(this, tr("Select EPD output file"),
-			QString(), tr("Extended Position Description (*.epd)"));
+			defaultPath, tr("Extended Position Description (*.epd)"));
 		connect(dlg, &QFileDialog::fileSelected, ui->m_epdoutEdit, &QLineEdit::setText);
 		dlg->setAttribute(Qt::WA_DeleteOnClose);
 		dlg->setAcceptMode(QFileDialog::AcceptSave);

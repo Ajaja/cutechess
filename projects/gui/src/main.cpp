@@ -42,8 +42,6 @@ int main(int argc, char* argv[])
 
 	QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
 
-	qputenv("QT_SCALE_FACTOR", "1.25");
-
 	CuteChessApplication app(argc, argv);
 
 	QTranslator translator;

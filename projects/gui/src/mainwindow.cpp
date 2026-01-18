@@ -264,7 +264,9 @@ void MainWindow::createActions()
 	connect(m_newTournamentAct, SIGNAL(triggered()), this, SLOT(newTournament()));
 	connect(m_loadTournamentAct, &QAction::triggered, [=]()
 	{
-		QString fileName = QFileDialog::getOpenFileName(this, "Load tournament from file", QDir::homePath(), "Tournament files (*.trnmt)");
+		auto defaultPath = QSettings().value("tournament/default_savepath").toString();
+		if (defaultPath.isEmpty()) defaultPath = QCoreApplication::applicationDirPath();
+		QString fileName = QFileDialog::getOpenFileName(this, "Load tournament from file", defaultPath, "Tournament files (*.trnmt)");
 		if (!fileName.isEmpty()) {
 			m_stopTournamentAct->disconnect();
 			m_pauseTournamentAct->disconnect();
@@ -286,8 +288,9 @@ void MainWindow::createActions()
 	{
 		if (!m_currentTournament) return;
 
-		QString filter = "Tournament files (*.trnmt)";
-		QString fileName = QFileDialog::getSaveFileName(this, "Store tournament in file", QDir::homePath(), filter);
+		auto defaultPath = QSettings().value("tournament/default_savepath").toString();
+		if (defaultPath.isEmpty()) defaultPath = QCoreApplication::applicationDirPath();
+		QString fileName = QFileDialog::getSaveFileName(this, "Store tournament in file", defaultPath, "Tournament files (*.trnmt)");
 
 		if (!fileName.isEmpty()) {
 			QFileInfo fileInfo(fileName);
@@ -325,13 +328,6 @@ void MainWindow::createActions()
 
 void MainWindow::createMenus()
 {
-	menuBar()->setStyleSheet(
-		"QMenuBar::item {"
-		"   padding: 2px 6px;"
-		"   margin: 1px;"
-		"}"
-	);
-
 	m_gameMenu = menuBar()->addMenu(tr("&Game"));
 	m_gameMenu->addAction(m_newGameAct);
 	m_gameMenu->addSeparator();

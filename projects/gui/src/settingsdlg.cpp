@@ -24,6 +24,7 @@
 #include <QFileDialog>
 #include <gamemanager.h>
 #include "cutechessapp.h"
+#include <QApplication>
 
 SettingsDialog::SettingsDialog(QWidget* parent)
 	: QDialog(parent),
@@ -84,6 +85,12 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 		this, [=](int value)
 	{
 		QSettings().setValue("ui/move_animation_duration", value);
+	});
+
+	connect(ui->m_fontSizeSpin, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+		this, [=](int value)
+	{
+		QSettings().setValue("ui/font_size", value);
 	});
 
 	connect(ui->m_concurrencySpin, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
@@ -267,6 +274,8 @@ void SettingsDialog::readSettings()
 	ui->m_tbPathEdit->setText(s.value("tb_path").toString());
 	ui->m_moveAnimationSpin->setValue(
 		s.value("move_animation_duration", 300).toInt());
+	ui->m_fontSizeSpin->setValue(
+		s.value("font_size", 11).toInt());
 	int index = ui->m_themeCombo->findText(s.value("theme").toString());
 	ui->m_themeCombo->setCurrentIndex(index);
 	index = ui->m_colorThemeCombo->findText(s.value("colorTheme").toString());

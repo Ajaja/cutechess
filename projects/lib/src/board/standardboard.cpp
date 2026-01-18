@@ -19,6 +19,7 @@
 #include "standardboard.h"
 #include "westernzobrist.h"
 #include "syzygytablebase.h"
+#include <QSettings>
 
 namespace {
 
@@ -1090,9 +1091,14 @@ QString StandardBoard::infoGuiString() const
 		}
 	}
 
+	QString padding = "";
+	int globalFontSize = QSettings().value("ui/font_size", 11).toInt();
+	int paddingAmount = 1 + 2 * (globalFontSize <= 13) + 2 * (globalFontSize <= 11);
+	for (int i = 0; i < paddingAmount; i++) padding += " ";
+
 	QString result;
-    result += "100 plies rule: " + QString::number(reversibleMoveCount()) + "        |        ";
-	result += "Material: " + QString::number(material[0] - material[1]) + "        |        ";
+    result += "100 plies rule: " + QString::number(reversibleMoveCount()) + padding + "|" + padding;
+	result += "Material: " + QString::number(material[0] - material[1]) + padding + "|" + padding;
 	result += "Piece count: " + QString::number(pieceCount);
 	return result;
 }

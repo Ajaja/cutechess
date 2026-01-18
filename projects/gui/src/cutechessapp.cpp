@@ -84,6 +84,11 @@ CuteChessApplication::CuteChessApplication(int& argc, char* argv[])
 	QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, QCoreApplication::applicationDirPath() + "/cutechess-config");
 	QSettings::setDefaultFormat(QSettings::IniFormat);
 
+	// Set font size
+	QFont defaultFont = QApplication::font();
+	defaultFont.setPointSize(QSettings().value("ui/font_size", 11).toInt());
+	QApplication::setFont(defaultFont);
+
 	// Load the engines
 	engineManager()->loadEngines(configPath() + QLatin1String("/engines.json"));
 

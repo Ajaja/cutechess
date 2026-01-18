@@ -1347,7 +1347,6 @@ void Tournament::saveTournament()
 
     QFile file(m_savePath);
     if (!file.open(QIODevice::WriteOnly)) {
-        qWarning() << "Tournament::saveTournament(): Could not open file for writing: " << m_savePath;
         return;
     }
 
