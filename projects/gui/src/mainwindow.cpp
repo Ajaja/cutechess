@@ -469,13 +469,13 @@ void MainWindow::readSettings()
 	s.beginGroup("ui");
 	s.beginGroup("mainwindow");
 
+	restoreState(s.value("window_state").toByteArray());
 	restoreGeometry(s.value("geometry").toByteArray());
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 	// Workaround for https://bugreports.qt.io/browse/QTBUG-16252
 	if (isMaximized())
 		setGeometry(QApplication::desktop()->availableGeometry(this));
 #endif
-	restoreState(s.value("window_state").toByteArray());
 	if (s.value("window_maximized", false).toBool())
         showMaximized();
     else
@@ -904,20 +904,11 @@ void MainWindow::setupTournament(bool start) {
 		t->continueAfterPause();
 	});
 	
-	if (start) {
-		m_loadTournamentAct->setEnabled(false);
-		m_saveTournamentAct->setEnabled(false);
-		m_stopTournamentAct->setEnabled(true);
-		m_pauseTournamentAct->setEnabled(true);
-		m_newTournamentAct->setEnabled(false);
-	} else {
-		m_loadTournamentAct->setEnabled(true);
-		m_saveTournamentAct->setEnabled(true);
-		m_stopTournamentAct->setEnabled(false);
-		m_pauseTournamentAct->setEnabled(false);
-		m_newTournamentAct->setEnabled(true);	
-		m_continueTournamentAc->setEnabled(true);	
-	}
+	m_loadTournamentAct->setEnabled(false);
+	m_saveTournamentAct->setEnabled(false);
+	m_stopTournamentAct->setEnabled(true);
+	m_pauseTournamentAct->setEnabled(true);
+	m_newTournamentAct->setEnabled(false);
 
 	resultsDialog->setTournament(t);
 }

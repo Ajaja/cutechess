@@ -741,7 +741,7 @@ class LIB_EXPORT Tournament : public QObject
 		QTextStream m_epdOut;
 		QString m_startFen;
 		int m_repetitionCounter;
-		int m_swapSides;
+		bool m_swapSides;
 		bool m_reverseSides;
 
 		QString m_resultFormat;
