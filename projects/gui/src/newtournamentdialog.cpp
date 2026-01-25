@@ -82,10 +82,25 @@ NewTournamentDialog::NewTournamentDialog(EngineManager* engineManager,
 		moveEngine(1);
 	});
 
+	connect(ui->m_browseSavepathBtn, &QPushButton::clicked, this, [=]()
+	{
+		auto defaultPath = QSettings().value("tournament/default_savepath").toString();
+		if (defaultPath.isEmpty()) defaultPath = QCoreApplication::applicationDirPath();
+
+		auto dlg = new QFileDialog(this, tr("Select tournament save file"),
+			defaultPath, tr("Tournament save file (*.trnmt)"));
+		connect(dlg, &QFileDialog::fileSelected, ui->m_savepathEdit, &QLineEdit::setText);
+		dlg->setAttribute(Qt::WA_DeleteOnClose);
+		dlg->setAcceptMode(QFileDialog::AcceptSave);
+		dlg->open();
+	});
 	connect(ui->m_browsePgnoutBtn, &QPushButton::clicked, this, [=]()
 	{
+		auto defaultPath = QSettings().value("tournament/default_pgn_output_file").toString();
+		if (defaultPath.isEmpty()) defaultPath = QCoreApplication::applicationDirPath();
+
 		auto dlg = new QFileDialog(this, tr("Select PGN output file"),
-			QString(), tr("Portable Game Notation (*.pgn)"));
+			defaultPath, tr("Portable Game Notation (*.pgn)"));
 		connect(dlg, &QFileDialog::fileSelected, ui->m_pgnoutEdit, &QLineEdit::setText);
 		dlg->setAttribute(Qt::WA_DeleteOnClose);
 		dlg->setAcceptMode(QFileDialog::AcceptSave);
@@ -93,8 +108,11 @@ NewTournamentDialog::NewTournamentDialog(EngineManager* engineManager,
 	});
 	connect(ui->m_browseEpdoutBtn, &QPushButton::clicked, this, [=]()
 	{
+		auto defaultPath = QSettings().value("tournament/default_epd_output_file").toString();
+		if (defaultPath.isEmpty()) defaultPath = QCoreApplication::applicationDirPath();
+
 		auto dlg = new QFileDialog(this, tr("Select EPD output file"),
-			QString(), tr("Extended Position Description (*.epd)"));
+			defaultPath, tr("Extended Position Description (*.epd)"));
 		connect(dlg, &QFileDialog::fileSelected, ui->m_epdoutEdit, &QLineEdit::setText);
 		dlg->setAttribute(Qt::WA_DeleteOnClose);
 		dlg->setAcceptMode(QFileDialog::AcceptSave);
@@ -332,6 +350,8 @@ Tournament* NewTournamentDialog::createTournament(GameManager* gameManager) cons
 	auto t = TournamentFactory::create(
 		ts->tournamentType(), gameManager, parent());
 
+	t->setSavePath(ui->m_savepathEdit->text());
+
 	t->setPgnCleanupEnabled(false);
 	t->setName(ui->m_nameEdit->text());
 	t->setSite(ui->m_siteEdit->text());
@@ -384,6 +404,14 @@ Tournament* NewTournamentDialog::createTournament(GameManager* gameManager) cons
 void NewTournamentDialog::readSettings()
 {
 	ui->m_siteEdit->setText(QSettings().value("pgn/site").toString());
+
+    QString savepath = ui->m_savepathEdit->text();
+    if (savepath.isEmpty())
+    {
+        savepath = QSettings().value("tournament/default_savepath",
+                                    QString()).toString();
+        ui->m_savepathEdit->setText(savepath);
+    }
 
 	QString pgnName = ui->m_pgnoutEdit->text();
 	if (pgnName.isEmpty())

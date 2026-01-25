@@ -134,6 +134,8 @@ class GraphicsBoard : public QGraphicsItem
 		/*! Sets board flipping to \a flipped. */
 		void setFlipped(bool flipped);
 
+		void setInfoGuiString(QString string);
+
 	private:
 		int squareIndex(const Chess::Square& square) const;
 
@@ -148,6 +150,7 @@ class GraphicsBoard : public QGraphicsItem
 		QColor m_textColor;
 		QVector<GraphicsPiece*> m_squares;
 		QPropertyAnimation* m_highlightAnim;
+		QString m_infoGuiString;
 		bool m_flipped;
 };
 

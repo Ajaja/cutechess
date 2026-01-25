@@ -18,11 +18,14 @@
 
 #include "cutechessapp.h"
 
+#include <QGuiApplication>
+#include <QStyleHints>
 #include <QCoreApplication>
 #include <QDir>
 #include <QTime>
 #include <QFileInfo>
 #include <QSettings>
+#include <QStyleFactory>
 
 #include <mersenne.h>
 #include <enginemanager.h>
@@ -78,13 +81,25 @@ CuteChessApplication::CuteChessApplication(int& argc, char* argv[])
 	QCoreApplication::setApplicationVersion(CUTECHESS_VERSION);
 
 	// Use Ini format on all platforms
+	QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, QCoreApplication::applicationDirPath() + "/cutechess-config");
 	QSettings::setDefaultFormat(QSettings::IniFormat);
+
+	// Set font size
+	QFont defaultFont = QApplication::font();
+	defaultFont.setPointSize(QSettings().value("ui/font_size", 11).toInt());
+	QApplication::setFont(defaultFont);
 
 	// Load the engines
 	engineManager()->loadEngines(configPath() + QLatin1String("/engines.json"));
 
 	// Read the game database state
 	gameDatabaseManager()->readState(configPath() + QLatin1String("/gamedb.bin"));
+
+	QSettings s;
+	if (s.value("ui/colorTheme").toString() == "Dark")
+		QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
+	else if (s.value("ui/colorTheme").toString() == "Light")
+		QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
 
 	connect(this, SIGNAL(lastWindowClosed()), this, SLOT(onLastWindowClosed()));
 	connect(this, SIGNAL(aboutToQuit()), this, SLOT(onAboutToQuit()));

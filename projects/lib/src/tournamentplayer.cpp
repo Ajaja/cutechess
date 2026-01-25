@@ -17,6 +17,9 @@
 */
 
 #include "tournamentplayer.h"
+#include "openingbook.h"
+
+#include <QJsonArray>
 
 
 TournamentPlayer::TournamentPlayer(PlayerBuilder* builder,
@@ -37,6 +40,22 @@ TournamentPlayer::TournamentPlayer(PlayerBuilder* builder,
 	  m_outcome()
 {
 	Q_ASSERT(builder != nullptr);
+}
+
+TournamentPlayer::TournamentPlayer()
+	: m_builder(nullptr),
+	  m_timeControl{},
+	  m_book(nullptr),
+	  m_bookDepth(0),
+	  m_wins(0),
+	  m_draws(0),
+	  m_losses(0),
+	  m_whiteWins(0),
+	  m_whiteDraws(0),
+	  m_whiteLosses(0),
+	  m_terminations(24),
+	  m_outcome()
+{
 }
 
 const PlayerBuilder* TournamentPlayer::builder() const
@@ -170,4 +189,90 @@ int TournamentPlayer::outcomes(int type) const
 const QMap<QString, int> & TournamentPlayer::outcomeMap() const
 {
 	return m_outcome;
+}
+
+QJsonObject TournamentPlayer::toJson() const
+{
+    QJsonObject json;
+
+    if (m_builder)
+        json["builder"] = m_builder->toJson();
+    
+    json["timeControl"] = m_timeControl.toJson();
+    
+    if (m_book)
+        json["book"] = m_book->toJson();
+
+    json["bookDepth"] = m_bookDepth;
+    json["wins"] = m_wins;
+    json["draws"] = m_draws;
+    json["losses"] = m_losses;
+    json["whiteWins"] = m_whiteWins;
+    json["whiteDraws"] = m_whiteDraws;
+    json["whiteLosses"] = m_whiteLosses;
+
+    QJsonArray terminationsArray;
+    for (int val : m_terminations) {
+        terminationsArray.append(val);
+    }
+    json["terminations"] = terminationsArray;
+
+    QJsonObject outcomeObject;
+    QMapIterator<QString, int> i(m_outcome);
+    while (i.hasNext()) {
+        i.next();
+        outcomeObject.insert(i.key(), i.value());
+    }
+    json["outcomeMap"] = outcomeObject;
+
+    return json;
+}
+
+#include "enginebuilder.h"
+#include "engineconfiguration.h"
+
+bool TournamentPlayer::loadFromJson(const QJsonObject& json)
+{
+    if (json.isEmpty())
+        return false;
+
+   if (json.contains("builder"))
+    {
+        if (!m_builder)
+            m_builder = new EngineBuilder(EngineConfiguration());
+            
+        m_builder->loadFromJson(json["builder"].toObject());
+    }
+
+    if (json.contains("timeControl"))
+        m_timeControl.loadFromJson(json["timeControl"].toObject());
+
+    if (json.contains("book") && m_book)
+        const_cast<OpeningBook*>(m_book)->loadFromJson(json["book"].toObject());
+
+    m_bookDepth = json["bookDepth"].toInt();
+    m_wins = json["wins"].toInt();
+    m_draws = json["draws"].toInt();
+    m_losses = json["losses"].toInt();
+    m_whiteWins = json["whiteWins"].toInt();
+    m_whiteDraws = json["whiteDraws"].toInt();
+    m_whiteLosses = json["whiteLosses"].toInt();
+
+    if (json.contains("terminations")) {
+        m_terminations.clear();
+        QJsonArray terminationsArray = json["terminations"].toArray();
+        for (const QJsonValue& value : terminationsArray) {
+            m_terminations.append(value.toInt());
+        }
+    }
+
+    if (json.contains("outcomeMap")) {
+        m_outcome.clear();
+        QJsonObject outcomeObject = json["outcomeMap"].toObject();
+        for (auto it = outcomeObject.begin(); it != outcomeObject.end(); ++it) {
+            m_outcome.insert(it.key(), it.value().toInt());
+        }
+    }
+
+    return true;
 }

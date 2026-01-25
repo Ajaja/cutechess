@@ -24,6 +24,7 @@
 #include "board/side.h"
 #include <QVector>
 #include <QMap>
+#include <QJsonObject>
 
 class OpeningBook;
 
@@ -36,6 +37,7 @@ class LIB_EXPORT TournamentPlayer
 				 const TimeControl& timeControl,
 				 const OpeningBook* book,
 				 int bookDepth);
+		TournamentPlayer();
 
 		/*! Returns the player's builder object. */
 		const PlayerBuilder* builder() const;
@@ -118,6 +120,9 @@ class LIB_EXPORT TournamentPlayer
 		int outcomes(int type) const;
 		/*! Returns the player's game outcome statistics. */
 		const QMap<QString, int>& outcomeMap() const;
+
+		QJsonObject toJson() const;
+		bool loadFromJson(const QJsonObject& json);
 
 	private:
 		PlayerBuilder* m_builder;

@@ -23,24 +23,27 @@
 #include <QVBoxLayout>
 #include <QVector>
 #include <QTime>
+#include <QSettings>
 #include <chessplayer.h>
 
-EvalWidget::EvalWidget(QWidget *parent)
+EvalWidget::EvalWidget(QString name, QWidget *parent)
 	: QWidget(parent),
 	  m_player(nullptr),
-	  m_statsTable(new QTableWidget(1, 5, this)),
+	  m_statsTable(new QTableWidget(1, 6, this)),
 	  m_pvTable(new QTableWidget(0, 5, this)),
-	  m_depth(-1)
+	  m_depth(-1),
+	  m_name(name)
 {
 	m_statsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	auto hHeader = m_statsTable->horizontalHeader();
 	auto vHeader = m_statsTable->verticalHeader();
 	vHeader->hide();
+	vHeader->setDefaultSectionSize(20);
 	int maxHeight = hHeader->sizeHint().height() + vHeader->defaultSectionSize();
 	m_statsTable->setMaximumHeight(maxHeight);
 
 	QStringList statsHeaders;
-	statsHeaders << tr("NPS") << tr("Hash")
+	statsHeaders << tr("NPS") << tr("Decision Time") << tr("Hash")
 		     << tr("Pondermove") << tr("Ponderhit") << tr("TB");
 	m_statsTable->setHorizontalHeaderLabels(statsHeaders);
 	hHeader->setSectionResizeMode(QHeaderView::Stretch);
@@ -51,6 +54,7 @@ EvalWidget::EvalWidget(QWidget *parent)
 
 	m_pvTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	m_pvTable->verticalHeader()->hide();
+	m_pvTable->verticalHeader()->setDefaultSectionSize(20);
 
 	QStringList pvHeaders;
 	pvHeaders << tr("Depth") << tr("Time") << tr("Nodes")
@@ -68,6 +72,12 @@ EvalWidget::EvalWidget(QWidget *parent)
 	layout->addWidget(m_pvTable);
 	layout->setContentsMargins(0, 0, 0, 0);
 	setLayout(layout);
+
+	loadSettings();
+}
+
+EvalWidget::~EvalWidget() {
+	saveSettings();
 }
 
 void EvalWidget::clear()
@@ -93,6 +103,30 @@ void EvalWidget::setPlayer(ChessPlayer* player)
 		this, SLOT(clear()));
 	connect(player, SIGNAL(thinking(MoveEvaluation)),
 		this, SLOT(onEval(MoveEvaluation)));
+}
+
+void EvalWidget::saveSettings()
+{
+    QSettings settings;
+	settings.beginGroup("ui");
+	settings.beginGroup("evalwidget");
+
+    settings.setValue(m_name, m_pvTable->horizontalHeader()->saveState());
+
+    settings.endGroup();
+}
+
+void EvalWidget::loadSettings()
+{
+    QSettings settings;
+    settings.beginGroup("ui");
+	settings.beginGroup("evalwidget");
+    
+    if (settings.contains(m_name)) {
+        m_pvTable->horizontalHeader()->restoreState(settings.value(m_name).toByteArray());
+    }
+
+    settings.endGroup();
 }
 
 void EvalWidget::onEval(const MoveEvaluation& eval)
@@ -142,16 +176,25 @@ void EvalWidget::onEval(const MoveEvaluation& eval)
 			depth += "/" + QString::number(eval.selectiveDepth());
 	}
 
-	QString time;
-	int ms = eval.time();
-	if (!ms)
-		time = "";
-	else if (ms < 1000)
-		time = QString("%1 ms").arg(ms);
-	else if (ms < 1000 * 60 * 60)
-		time = QTime(0, 0).addMSecs(eval.time()).toString("mm:ss");
-	else
-		time = QTime(0, 0).addMSecs(eval.time()).toString("hh:mm:ss");
+	auto formatTime = [](int ms) {
+		QString time;
+		if (!ms)
+			time = "";
+		else if (ms < 1000)
+			time = QString("%1 ms").arg(ms);
+		else if (ms < 1000 * 60 * 60)
+			time = QTime(0, 0).addMSecs(ms).toString("mm:ss");
+		else
+			time = QTime(0, 0).addMSecs(ms).toString("hh:mm:ss");
+		return time;
+	};
+
+	QString time = formatTime(eval.time());
+	QString decisionTime = eval.decisionTime() ? formatTime(eval.decisionTime()) : "0 ms";
+
+	auto item = m_statsTable->itemPrototype()->clone();
+	item->setText(decisionTime);
+	m_statsTable->setItem(0, DecisionTimeHeader, item);
 
 	QString nodeCount;
 	if (eval.nodeCount())
@@ -163,8 +206,8 @@ void EvalWidget::onEval(const MoveEvaluation& eval)
 	items << new QTableWidgetItem(depth)
 	      << new QTableWidgetItem(time)
 	      << new QTableWidgetItem(nodeCount)
-	      << new QTableWidgetItem(score)
-	      << new QTableWidgetItem(eval.pv());
+          << new QTableWidgetItem(score + "  ")
+	      << new QTableWidgetItem(eval.moveNumberInfo() + eval.pv());
 
 	for (int i = 0; i < 4; i++)
 		items[i]->setTextAlignment(Qt::AlignVCenter | Qt::AlignRight);

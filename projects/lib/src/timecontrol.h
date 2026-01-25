@@ -22,6 +22,7 @@
 #include <QElapsedTimer>
 #include <QString>
 #include <QCoreApplication>
+#include <QJsonObject>
 class QSettings;
 
 /*!
@@ -212,6 +213,9 @@ class LIB_EXPORT TimeControl
 
 		/*! Writes this time control to \a settings. */
 		void writeSettings(QSettings* settings);
+
+		QJsonObject toJson() const;
+		bool loadFromJson(const QJsonObject& json);
 
 	private:
 		int m_movesPerTc;

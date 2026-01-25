@@ -19,6 +19,7 @@
 #ifndef MOVEEVALUATION_H
 #define MOVEEVALUATION_H
 
+#include <QStringList>
 #include <QString>
 #include <QMetaType>
 
@@ -87,6 +88,11 @@ class LIB_EXPORT MoveEvaluation
 		/*! Move time in milliseconds. */
 		int time() const;
 
+		/*! Move decision time in milliseconds */
+		int decisionTime() const;
+
+		QString moveNumberInfo() const;
+
 		/*!
 		 * How many nodes were searched?
 		 * \note For human players this is always 0.
@@ -119,6 +125,9 @@ class LIB_EXPORT MoveEvaluation
 
 		/*! The current ponder move in SAN notation. */
 		QString ponderMove() const;
+
+		/*! The last best move in SAN notation. */
+		QString lastBestMove() const;
 
 		/*!
 		 * The principal variation.
@@ -156,6 +165,11 @@ class LIB_EXPORT MoveEvaluation
 		/*! Sets the move time to \a time. */
 		void setTime(int time);
 
+		/*! Sets the decision time to \a time. */
+		void setDecisionTime(int time);
+
+		void setMoveNumberInfo(QString moveNumberInfo);
+
 		/*! Sets the node count to \a nodeCount. */
 		void setNodeCount(quint64 nodeCount);
 
@@ -174,6 +188,9 @@ class LIB_EXPORT MoveEvaluation
 		/*! Sets the current ponder move to \a san. */
 		void setPonderMove(const QString& san);
 
+		/*! Sets the last best move to \a san. */
+		void setLastBestMove(const QString& san);
+
 		/*! Sets the principal variation to \a pv. */
 		void setPv(const QString& pv);
 
@@ -190,6 +207,7 @@ class LIB_EXPORT MoveEvaluation
 		int m_selDepth;
 		int m_score;
 		int m_time;
+		int m_decisionTime;
 		int m_pvNumber;
 		int m_hashUsage;
 		int m_ponderhitRate;
@@ -198,6 +216,8 @@ class LIB_EXPORT MoveEvaluation
 		quint64 m_tbHits;
 		QString m_pv;
 		QString m_ponderMove;
+		QString m_lastBestMove;
+		QString m_moveNumberInfo;
 };
 
 Q_DECLARE_METATYPE(MoveEvaluation)

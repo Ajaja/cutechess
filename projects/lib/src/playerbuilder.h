@@ -20,6 +20,7 @@
 #define PLAYERBUILDER_H
 
 #include <QString>
+#include <QJsonObject>
 class QObject;
 class ChessPlayer;
 
@@ -66,6 +67,9 @@ class LIB_EXPORT PlayerBuilder
 					    const char* method,
 					    QObject* parent,
 					    QString* error) const = 0;
+
+		virtual QJsonObject toJson() const;
+		virtual bool loadFromJson(const QJsonObject& json);
 
 	private:
 		QString m_name;

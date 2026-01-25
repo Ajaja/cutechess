@@ -160,3 +160,52 @@ Chess::Result GameAdjudicator::result() const
 {
 	return m_result;
 }
+
+QJsonObject GameAdjudicator::toJson() const {
+	QJsonObject json;
+	json["drawMoveNum"] = m_drawMoveNum;
+	json["drawMoveCount"] = m_drawMoveCount;
+	json["drawScore"] = m_drawScore;
+	json["drawScoreCount"] = m_drawScoreCount;
+	json["resignMoveCount"] = m_resignMoveCount;
+	json["resignScore"] = m_resignScore;
+	json["resignScoreCount0"] = m_resignScoreCount[0];
+	json["resignScoreCount1"] = m_resignScoreCount[1];
+	json["winScoreCount0"] = m_winScoreCount[0];
+	json["winScoreCount1"] = m_winScoreCount[1];
+	json["twoSided"] = m_twoSided;
+	json["maxGameLength"] = m_maxGameLength;
+	json["tbEnabled"] = m_tbEnabled;
+
+	QJsonObject result;
+	result["type"] = m_result.toShortString();
+	result["winner"] = m_result.winner().symbol();
+	result["description"] = m_result.m_description;
+
+	json["result"] = result;
+
+	return json;
+}
+
+bool GameAdjudicator::loadFromJson(const QJsonObject& json) {
+	m_drawMoveNum = json["drawMoveNum"].toInt();
+	m_drawMoveCount = json["drawMoveCount"].toInt();
+	m_drawScore = json["drawScore"].toInt();
+	m_drawScoreCount = json["drawScoreCount"].toInt();
+	m_resignMoveCount = json["resignMoveCount"].toInt();
+	m_resignScore = json["resignScore"].toInt();
+	m_resignScoreCount[0] = json["resignScoreCount0"].toInt();
+	m_resignScoreCount[1] = json["resignScoreCount1"].toInt();
+	m_winScoreCount[0] = json["winScoreCount0"].toInt();
+	m_winScoreCount[1] = json["winScoreCount1"].toInt();
+	m_twoSided = json["twoSided"].toBool();
+	m_maxGameLength = json["maxGameLength"].toInt();
+	m_tbEnabled = json["tbEnabled"].toBool();
+
+	QJsonObject result = json["result"].toObject();
+	m_result = Chess::Result(result["type"].toString());
+	Chess::Side winner(result["winner"].toString());
+	m_result = Chess::Result(m_result.type(), winner, result["description"].toString());
+
+	return true;
+}

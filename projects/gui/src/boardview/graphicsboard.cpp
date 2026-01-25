@@ -23,6 +23,7 @@
 #include <QPropertyAnimation>
 #include <board/square.h>
 #include "graphicspiece.h"
+#include "uitheme.h"
 
 namespace {
 
@@ -59,8 +60,8 @@ GraphicsBoard::GraphicsBoard(int files,
 	  m_ranks(ranks),
 	  m_squareSize(squareSize),
 	  m_coordSize(squareSize / 2.0),
-	  m_lightColor(QColor(0xff, 0xce, 0x9e)),
-	  m_darkColor(QColor(0xd1, 0x8b, 0x47)),
+	  m_lightColor(UIThemeManager::instance().currentTheme().m_lightSquare),
+	  m_darkColor(UIThemeManager::instance().currentTheme().m_darkSquare),
 	  m_wallColor(QColor(0xee,0xee,0xee)),
 	  m_squares(files * ranks),
 	  m_highlightAnim(nullptr),
@@ -88,7 +89,7 @@ int GraphicsBoard::type() const
 
 QRectF GraphicsBoard::boundingRect() const
 {
-	const auto margins = QMarginsF(m_coordSize, m_coordSize,
+	const auto margins = QMarginsF(m_coordSize, 3 * m_coordSize / 4,
 				       m_coordSize, m_coordSize);
 	return m_rect.marginsAdded(margins);
 }
@@ -126,7 +127,8 @@ void GraphicsBoard::paint(QPainter* painter,
 	}
 
 	auto font = painter->font();
-	font.setPointSizeF(font.pointSizeF() * 0.7);
+	auto intendedFontSize = font.pointSizeF() * 0.7;
+	font.setPointSizeF(font.pointSizeF() * 0.9);
 	painter->setFont(font);
 	painter->setPen(m_textColor);
 
@@ -134,8 +136,7 @@ void GraphicsBoard::paint(QPainter* painter,
 	const QString alphabet = "abcdefghijklmnopqrstuvwxyz";
 	for (int i = 0; i < m_files; i++)
 	{
-		const qreal tops[] = {m_rect.top() - m_coordSize,
-		                      m_rect.bottom()};
+		const qreal tops[] = {m_rect.bottom()};
 		for (const auto top : tops)
 		{
 			rect = QRectF(m_rect.left() + (m_squareSize * i), top,
@@ -144,6 +145,11 @@ void GraphicsBoard::paint(QPainter* painter,
 			painter->drawText(rect, Qt::AlignCenter, alphabet[file]);
 		}
 	}
+
+	// Board state text
+	rect = QRectF(m_rect.left() + (m_squareSize * 0), m_rect.top() - m_coordSize,
+			              m_squareSize * m_files, m_coordSize);
+	painter->drawText(rect, Qt::AlignCenter, m_infoGuiString);
 
 	// paint rank coordinates
 	for (int i = 0; i < m_ranks; i++)
@@ -159,6 +165,9 @@ void GraphicsBoard::paint(QPainter* painter,
 			painter->drawText(rect, Qt::AlignCenter, num);
 		}
 	}
+
+	font.setPointSizeF(intendedFontSize);
+	painter->setFont(font);
 }
 
 Chess::Square GraphicsBoard::squareAt(const QPointF& point) const
@@ -329,5 +338,10 @@ void GraphicsBoard::setFlipped(bool flipped)
 
 	clearHighlights();
 	m_flipped = flipped;
+	update();
+}
+
+void GraphicsBoard::setInfoGuiString(QString string) {
+	m_infoGuiString = string;
 	update();
 }

@@ -451,6 +451,64 @@ void UciEngine::parseInfo(const QVarLengthArray<QStringRef>& tokens,
 	}
 }
 
+int UciEngine::calculateFullMoveNumber()
+{
+	if (!board())
+		return 1;
+
+    int startMove = 1;
+    bool whiteToMove = true; 
+
+    QString fen = (board()->isRandomVariant() || m_startFen != board()->defaultFenString()) 
+                  ? m_startFen 
+                  : board()->defaultFenString();
+
+    QStringList fenParts = fen.split(' ');
+    if (fenParts.size() >= 6) {
+        startMove = fenParts.at(5).toInt();
+        whiteToMove = (fenParts.at(1) == "w");
+    }
+
+    QStringList moves = m_moveStrings.split(' ', Qt::SkipEmptyParts);
+    int movesMade = moves.size();
+
+    int additionalFullMoves = 0;
+    if (!whiteToMove) {
+        additionalFullMoves = (movesMade + 1) / 2;
+    } else {
+        additionalFullMoves = movesMade / 2;
+    }
+
+    return startMove + additionalFullMoves;
+}
+
+QString UciEngine::getMoveIndicatorString()
+{
+	if (!board())
+		return QString();
+
+    QString fen = (board()->isRandomVariant() || m_startFen != board()->defaultFenString()) 
+                  ? m_startFen 
+                  : board()->defaultFenString();
+    
+    QStringList fenParts = fen.split(' ');
+    bool startIsWhite = (fenParts.size() > 1) ? (fenParts.at(1) == "w") : true;
+
+    QStringList moves = m_moveStrings.trimmed().split(' ', Qt::SkipEmptyParts);
+    int movesMade = moves.size();
+    
+    bool currentlyWhite = (startIsWhite && (movesMade % 2 == 0)) || 
+                          (!startIsWhite && (movesMade % 2 != 0));
+
+    int n = calculateFullMoveNumber();
+
+    if (currentlyWhite) {
+        return QString("%1. ").arg(n);
+    } else {
+        return QString("%1... ").arg(n);
+    }
+}
+
 void UciEngine::parseInfo(const QStringRef& line)
 {
 	static const QString types[] =
@@ -477,6 +535,9 @@ void UciEngine::parseInfo(const QStringRef& line)
 	QStringRef token(nextToken(line));
 	QVarLengthArray<QStringRef> tokens;
 	MoveEvaluation eval;
+	eval.setLastBestMove(m_currentEval.lastBestMove());
+	eval.setDecisionTime(m_currentEval.decisionTime());
+	eval.setMoveNumberInfo(getMoveIndicatorString());
 
 	// The "string" info is not supported and it can't be parsed
 	// like other info lines.

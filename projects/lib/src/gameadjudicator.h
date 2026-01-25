@@ -19,6 +19,8 @@
 #ifndef GAMEADJUDICATOR_H
 #define GAMEADJUDICATOR_H
 
+#include <QJsonObject>
+
 #include "board/result.h"
 namespace Chess { class Board; }
 class MoveEvaluation;
@@ -96,6 +98,9 @@ class LIB_EXPORT GameAdjudicator
 		 * game can't be adjudicated yet, a null result is returned.
 		 */
 		Chess::Result result() const;
+
+		QJsonObject toJson() const;
+		bool loadFromJson(const QJsonObject& json);
 
 	private:
 		int m_drawMoveNum;

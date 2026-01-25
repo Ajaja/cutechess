@@ -210,3 +210,30 @@ void Sprt::addGameResult(GameResult result)
 	else if (result == Loss)
 		m_losses++;
 }
+
+QJsonObject Sprt::toJson() const
+{
+    QJsonObject json;
+    json.insert("elo0", m_elo0);
+    json.insert("elo1", m_elo1);
+    json.insert("alpha", m_alpha);
+    json.insert("beta", m_beta);
+    json.insert("wins", m_wins);
+    json.insert("losses", m_losses);
+    json.insert("draws", m_draws);
+    return json;
+}
+
+bool Sprt::loadFromJson(const QJsonObject& json)
+{
+    m_elo0 = json.value("elo0").toDouble();
+    m_elo1 = json.value("elo1").toDouble();
+    m_alpha = json.value("alpha").toDouble();
+    m_beta = json.value("beta").toDouble();
+    
+    m_wins = json.value("wins").toInt(0);
+    m_losses = json.value("losses").toInt(0);
+    m_draws = json.value("draws").toInt(0);
+
+    return true;
+}

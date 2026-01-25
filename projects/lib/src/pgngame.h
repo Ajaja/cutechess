@@ -18,6 +18,7 @@
 #ifndef PGNGAME_H
 #define PGNGAME_H
 
+#include <QJsonObject>
 #include <QMap>
 #include <QString>
 #include <QVector>
@@ -204,6 +205,9 @@ class LIB_EXPORT PgnGame
 
 		/*! Returns QMap of scores extracted from PGN comments */
 		QMap<int, int> extractScores() const;
+
+		QJsonObject toJson() const;
+		bool loadFromJson(const QJsonObject& json);
 
 	private:
 		bool parseMove(PgnStream& in, bool addEco);

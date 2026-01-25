@@ -36,20 +36,21 @@ QString evalString(const MoveEvaluation& eval)
 	if (eval.depth() > 0)
 		str += "/" + QString::number(eval.depth()) + " ";
 
-	int t = eval.time();
-	if (t == 0)
-		return str + "0s";
+	auto formatTime = [](int t, bool smallestPrecision) {
+        if (t == 0 || (!smallestPrecision && t < 10))
+            return QString::fromUtf8("0s");
 
-	int precision = 0;
-	if (t < 100)
-		precision = 3;
-	else if (t < 1000)
-		precision = 2;
-	else if (t < 10000)
-		precision = 1;
-	str += QString::number(double(t / 1000.0), 'f', precision) + 's';
+		int precision = 0;
+		if (t < 100 && smallestPrecision)
+			precision = 3;
+		else if (t < 1000)
+			precision = 2;
+		else if (t < 10000)
+			precision = 1;
+		return QString::number(double(t / 1000.0), 'f', precision) + 's';
+	};
 
-	return str;
+	return str + formatTime(eval.time(), true) + " " + formatTime(eval.decisionTime(), false);
 }
 
 } // anonymous namespace

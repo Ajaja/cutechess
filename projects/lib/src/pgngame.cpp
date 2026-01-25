@@ -26,6 +26,8 @@
 #include "pgnstream.h"
 #include "moveevaluation.h"
 
+#include <QJsonArray>
+
 namespace {
 
 void writeTag(QTextStream& out, const QString& tag, const QString& value)
@@ -581,4 +583,95 @@ QMap< int, int > PgnGame::extractScores() const
 		scores[count] = score;
 	}
 	return scores;
+}
+
+QJsonObject PgnGame::toJson() const
+{
+    QJsonObject json;
+
+    QJsonObject tagsObject;
+    QMap<QString, QString>::const_iterator it;
+    for (it = m_tags.constBegin(); it != m_tags.constEnd(); ++it) {
+        tagsObject.insert(it.key(), it.value());
+    }
+    json.insert("tags", tagsObject);
+
+    QJsonArray movesArray;
+    for (const MoveData& md : m_moves) {
+        QJsonObject moveObject;
+        moveObject.insert("key", QString::number(md.key)); // Store quint64 as string
+        moveObject.insert("moveString", md.moveString);
+        moveObject.insert("comment", md.comment);
+
+        QJsonObject genericObj;
+        
+        QJsonObject srcSq;
+        srcSq.insert("f", md.move.sourceSquare().file());
+        srcSq.insert("r", md.move.sourceSquare().rank());
+        
+        QJsonObject dstSq;
+        dstSq.insert("f", md.move.targetSquare().file());
+        dstSq.insert("r", md.move.targetSquare().rank());
+
+        genericObj.insert("from", srcSq);
+        genericObj.insert("to", dstSq);
+        genericObj.insert("promo", md.move.promotion());
+        
+        moveObject.insert("generic", genericObj);
+        movesArray.append(moveObject);
+    }
+    json.insert("moves", movesArray);
+
+    json.insert("startingSide", m_startingSide == Chess::Side::White ? "white" : "black");
+    json.insert("initialComment", m_initialComment);
+    if (m_gameStartTime.isValid())
+        json.insert("gameStartTime", m_gameStartTime.toString(Qt::ISODateWithMs));
+
+    return json;
+}
+
+bool PgnGame::loadFromJson(const QJsonObject& json)
+{
+    clear();
+
+    if (json.contains("tags") && json["tags"].isObject()) {
+        QJsonObject tagsObject = json["tags"].toObject();
+        for (auto it = tagsObject.begin(); it != tagsObject.end(); ++it) {
+            m_tags.insert(it.key(), it.value().toString());
+        }
+    }
+
+    if (json.contains("startingSide")) {
+        m_startingSide = (json["startingSide"].toString() == "white") 
+                         ? Chess::Side::White 
+                         : Chess::Side::Black;
+    }
+    m_initialComment = json["initialComment"].toString();
+    if (json.contains("gameStartTime"))
+        m_gameStartTime = QDateTime::fromString(json["gameStartTime"].toString(), Qt::ISODateWithMs);
+
+    if (json.contains("moves") && json["moves"].isArray()) {
+        QJsonArray movesArray = json["moves"].toArray();
+        for (int i = 0; i < movesArray.size(); ++i) {
+            QJsonObject moveObj = movesArray[i].toObject();
+            MoveData md;
+            
+            md.key = moveObj["key"].toString().toULongLong();
+            md.moveString = moveObj["moveString"].toString();
+            md.comment = moveObj["comment"].toString();
+
+            QJsonObject genericObj = moveObj["generic"].toObject();
+            QJsonObject srcSq = genericObj["from"].toObject();
+            QJsonObject dstSq = genericObj["to"].toObject();
+
+            Chess::Square from(srcSq["f"].toInt(), srcSq["r"].toInt());
+            Chess::Square to(dstSq["f"].toInt(), dstSq["r"].toInt());
+
+            md.move = Chess::GenericMove(from, to, genericObj["promo"].toInt());
+
+            m_moves.append(md);
+        }
+    }
+
+    return true;
 }

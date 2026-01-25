@@ -255,3 +255,69 @@ Chess::GenericMove OpeningBook::move(quint64 key) const
 	
 	return move;
 }
+
+#include <QJsonArray>
+
+QJsonObject OpeningBook::toJson() const
+{
+    QJsonObject json;
+    QJsonArray entriesArray;
+
+    for (auto it = m_map.constBegin(); it != m_map.constEnd(); ++it)
+    {
+        const Entry& entry = it.value();
+        QJsonObject entryObj;
+        
+        entryObj["key"] = QString::number(it.key(), 16);
+        
+        QJsonObject moveObj;
+        moveObj["fromFile"] = entry.move.sourceSquare().file();
+        moveObj["fromRank"] = entry.move.sourceSquare().rank();
+        moveObj["toFile"] = entry.move.targetSquare().file();
+        moveObj["toRank"] = entry.move.targetSquare().rank();
+        moveObj["promotion"] = entry.move.promotion();
+        
+        entryObj["move"] = moveObj;
+        entryObj["weight"] = entry.weight;
+        
+        entriesArray.append(entryObj);
+    }
+
+    json["entries"] = entriesArray;
+    return json;
+}
+
+bool OpeningBook::loadFromJson(const QJsonObject& json)
+{
+    if (!json.contains("entries") || !json["entries"].isArray())
+        return false;
+
+    m_map.clear();
+    QJsonArray entriesArray = json["entries"].toArray();
+
+    for (const QJsonValue& value : entriesArray)
+    {
+        QJsonObject entryObj = value.toObject();
+        
+        bool ok;
+        quint64 key = entryObj["key"].toString().toULongLong(&ok, 16);
+        
+        if (ok)
+        {
+            QJsonObject moveObj = entryObj["move"].toObject();
+            
+            Chess::Square source(moveObj["fromFile"].toInt(), moveObj["fromRank"].toInt());
+            Chess::Square target(moveObj["toFile"].toInt(), moveObj["toRank"].toInt());
+            
+            Chess::GenericMove move(source, target, moveObj["promotion"].toInt());
+            
+            Entry entry;
+            entry.move = move;
+            entry.weight = static_cast<quint16>(entryObj["weight"].toInt());
+            
+            m_map.insert(key, entry);
+        }
+    }
+
+    return !m_map.isEmpty();
+}

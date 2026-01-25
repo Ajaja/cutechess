@@ -21,6 +21,7 @@
 #define TOURNAMENTFACTORY_H
 
 class QString;
+class QJsonObject;
 class QObject;
 class Tournament;
 class GameManager;
@@ -39,6 +40,11 @@ class LIB_EXPORT TournamentFactory
 		static Tournament* create(const QString& type,
 					  GameManager* manager,
 					  QObject* parent = nullptr);
+
+        static Tournament* load(const QJsonObject& json, GameManager* gameManager, QObject* parent = nullptr);
+        static Tournament* loadFromFile(const QString& filePath, GameManager* gameManager, QObject* parent = nullptr);
+
+        static void storeToFile(const QString& filePath, Tournament* tournament);
 
 	private:
 		TournamentFactory();

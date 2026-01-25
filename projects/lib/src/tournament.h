@@ -25,6 +25,8 @@
 #include <QMap>
 #include <QFile>
 #include <QTextStream>
+#include <QJsonObject>
+#include <QJsonArray>
 #include "board/move.h"
 #include "timecontrol.h"
 #include "pgngame.h"
@@ -338,6 +340,12 @@ class LIB_EXPORT Tournament : public QObject
 		 */
 		int gameNumber(ChessGame* game) const;
 
+		virtual QJsonObject toJson() const;
+		virtual bool loadFromJson(const QJsonObject& json);
+		void saveTournament();
+
+		void setSavePath(const QString path);
+
 	public slots:
 		/*! Starts the tournament. */
 		void start();
@@ -349,6 +357,9 @@ class LIB_EXPORT Tournament : public QObject
 		 * is fully stopped.
 		 */
 		void stop();
+		void pause();
+		bool isPaused();
+		void continueAfterPause();
 
 	signals:
 		/*!
@@ -396,8 +407,10 @@ class LIB_EXPORT Tournament : public QObject
 		 * is sent.
 		 */
 		void finished();
+		void paused();
 
 	protected:
+
 		/*! Sets the currently executing tournament round to \a round. */
 		void setCurrentRound(int round);
 		/*! Returns the number of games in progress. */
@@ -711,6 +724,7 @@ class LIB_EXPORT Tournament : public QObject
 		int m_openingDepth;
 		int m_seedCount;
 		bool m_stopping;
+		bool m_pausing, m_paused;
 		int m_openingRepetitions;
 		OpeningPolicy m_openingPolicy;
 		bool m_recover;
@@ -727,7 +741,7 @@ class LIB_EXPORT Tournament : public QObject
 		QTextStream m_epdOut;
 		QString m_startFen;
 		int m_repetitionCounter;
-		int m_swapSides;
+		bool m_swapSides;
 		bool m_reverseSides;
 
 		QString m_resultFormat;
@@ -737,8 +751,12 @@ class LIB_EXPORT Tournament : public QObject
 		QList<TournamentPlayer> m_players;
 		QMap<int, PgnGame> m_pgnGames;
 		QMap<ChessGame*, GameData*> m_gameData;
+		QMap<ChessGame*, QPair<QString, QVector<Chess::Move>>> m_gameOpenings;
+		QMap<ChessGame*, int> m_gameRounds;
 		QVector<Chess::Move> m_openingMoves;
 		QMap<int, QString> m_headerMap;
+
+		QString m_savePath;
 };
 
 /*!

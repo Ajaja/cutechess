@@ -79,3 +79,37 @@ TournamentPair* RoundRobinTournament::nextPair(int gameNumber)
 	else
 		return nextPair(gameNumber);
 }
+
+QJsonObject RoundRobinTournament::toJson() const
+{
+    QJsonObject json = Tournament::toJson();
+
+    json["pairNumber"] = m_pairNumber;
+    
+    QJsonArray topArray;
+    for (int index : m_topHalf) topArray.append(index);
+    json["topHalf"] = topArray;
+
+    QJsonArray bottomArray;
+    for (int index : m_bottomHalf) bottomArray.append(index);
+    json["bottomHalf"] = bottomArray;
+
+    return json;
+}
+
+bool RoundRobinTournament::loadFromJson(const QJsonObject& json)
+{
+    m_pairNumber = json["pairNumber"].toInt();
+
+    m_topHalf.clear();
+    QJsonArray topArray = json["topHalf"].toArray();
+    for (auto val : topArray) m_topHalf.append(val.toInt());
+
+    m_bottomHalf.clear();
+    QJsonArray bottomArray = json["bottomHalf"].toArray();
+    for (auto val : bottomArray) m_bottomHalf.append(val.toInt());
+
+	Tournament::loadFromJson(json);
+
+    return true;
+}

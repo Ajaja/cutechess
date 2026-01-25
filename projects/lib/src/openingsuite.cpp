@@ -19,6 +19,7 @@
 #include "openingsuite.h"
 #include <QFile>
 #include <QTextStream>
+#include <QJsonArray>
 #include <algorithm>
 #include "pgnstream.h"
 #include "epdrecord.h"
@@ -303,4 +304,115 @@ OpeningSuite::FilePosition OpeningSuite::getEpdPos()
 	}
 
 	return pos;
+}
+
+QJsonObject OpeningSuite::toJson() const
+{
+    QJsonObject json;
+
+    json["fileName"] = m_fileName;
+    json["fen"] = m_fen;
+    json["format"] = m_format;
+    json["order"] = m_order;
+    json["startIndex"] = m_startIndex;
+    json["gameIndex"] = m_gameIndex;
+    json["gamesRead"] = m_gamesRead;
+
+    return json;
+}
+
+bool OpeningSuite::loadFromJson(const QJsonObject& json)
+{
+    if (json.isEmpty())
+        return false;
+
+    m_fileName = json["fileName"].toString();
+    m_fen = json["fen"].toString();
+    m_format = static_cast<Format>(json["format"].toInt());
+    m_order = static_cast<Order>(json["order"].toInt());
+    m_startIndex = json["startIndex"].toInt();
+    m_gameIndex = json["gameIndex"].toInt();
+    m_gamesRead = json["gamesRead"].toInt();
+
+    m_filePositions.clear();
+
+    if (m_fileName.isEmpty())
+        return true;
+
+    m_file = new QFile(m_fileName);
+    if (!m_file->open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        delete m_file;
+        m_file = nullptr;
+        return false;
+    }
+
+    if (m_format == EpdFormat)
+    {
+        m_epdStream = new QTextStream(m_file);
+    }
+    else if (m_format == PgnFormat)
+    {
+        m_pgnStream = new PgnStream(m_file);
+    }
+
+    if (m_order == RandomOrder)
+    {
+        // Create a vector of file positions
+        for (;;)
+        {
+            FilePosition pos;
+            if (m_format == EpdFormat)
+                pos = getEpdPos();
+            else if (m_format == PgnFormat)
+                pos = getPgnPos();
+            else
+                return false; // should be unreachable
+
+            if (pos.pos == -1)
+                break;
+
+            m_filePositions.append(pos);
+        }
+
+        // use a Knuth shuffle to generate a random permutation
+        for (int i = 0; i <= m_filePositions.size() - 2; i++)
+        {
+            int j = i + Mersenne::random() % (m_filePositions.size() - i);
+            std::swap(m_filePositions[i], m_filePositions[j]);
+        }
+
+        if (m_startIndex >= m_filePositions.size())
+            qWarning("Start index larger than book size, wrapping after %d.", m_filePositions.size());
+
+        m_gameIndex += m_startIndex % m_filePositions.size();
+    }
+    else if (m_order == SequentialOrder)
+	{
+		for (int i = 0; i < m_gamesRead; i++)
+		{
+			FilePosition pos;
+			if (m_format == EpdFormat)
+			{
+				pos = getEpdPos();
+				if (m_epdStream->atEnd())
+				{
+					qWarning("Start index larger than book size, wrapping after %d.", i + 1);
+					m_epdStream->seek(0);
+					m_epdStream->resetStatus();
+                                }
+			}
+			else if (m_format == PgnFormat)
+			{
+				pos = getPgnPos();
+				if (!m_pgnStream->nextGame())
+				{
+					qWarning("Start index larger than book size, wrapping after %d.", i + 1);
+					m_pgnStream->rewind();
+				}
+			}
+		}
+	}
+
+    return true;
 }

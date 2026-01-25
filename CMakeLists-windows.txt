@@ -14,7 +14,11 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/.version)
 	string(REGEX REPLACE "(\r?\n)+" "" CUTECHESS_VERSION "${CUTECHESS_VERSION}")
 endif()
 
-option(WITH_TESTS "Enable building of unit tests" ON)
+option(WITH_TESTS "Enable building of unit tests" OFF)
+
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+find_package(ZLIB REQUIRED)
+find_package(zstd REQUIRED)
 
 option(USE_UBSAN "Enable Undefined Behavior Sanitizer" OFF)
 
@@ -39,12 +43,12 @@ if(WITH_TESTS)
 	set(QT_COMPONENTS ${QT_COMPONENTS} Test)
 endif()
 
-find_package(Qt6 COMPONENTS ${QT_COMPONENTS} Core5Compat QUIET)
-if(NOT Qt6_FOUND)
-	find_package(Qt5 5.15 REQUIRED COMPONENTS ${QT_COMPONENTS})
-endif()
+find_package(Qt6 COMPONENTS ${QT_COMPONENTS} Core5Compat)
 
 include(GNUInstallDirs)
+
+set(ZLIB_USE_STATIC_LIBS ON)
+set(ZSTD_USE_STATIC_LIBS ON)
 
 message(STATUS "Setting up build for Cute Chess version ${CUTECHESS_VERSION}")
 
@@ -192,7 +196,7 @@ target_include_directories(lib PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/projects/lib/components/json/src>
 )
 
-target_link_libraries(lib Qt::Core)
+target_link_libraries(lib Qt::Core ZLIB::ZLIB zstd::libzstd_static)
 if(Qt6_FOUND)
 	target_link_libraries(lib Qt::Core5Compat)
 endif()

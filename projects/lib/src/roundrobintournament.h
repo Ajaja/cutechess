@@ -39,6 +39,9 @@ class LIB_EXPORT RoundRobinTournament : public Tournament
 		// Inherited from Tournament
 		virtual QString type() const;
 
+		virtual QJsonObject toJson() const override;
+		virtual bool loadFromJson(const QJsonObject& json) override;
+
 	protected:
 		// Inherited from Tournament
 		virtual void initializePairing();

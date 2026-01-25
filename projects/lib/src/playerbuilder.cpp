@@ -36,3 +36,14 @@ void PlayerBuilder::setName(const QString& name)
 {
 	m_name = name;
 }
+
+QJsonObject PlayerBuilder::toJson() const {
+    QJsonObject json;
+    json["name"] = m_name;
+    return json;
+}
+
+bool PlayerBuilder::loadFromJson(const QJsonObject& json) {
+    m_name = json["name"].toString();
+    return true;
+}

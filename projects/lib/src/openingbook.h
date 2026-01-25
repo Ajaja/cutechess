@@ -21,6 +21,7 @@
 
 #include <QtGlobal>
 #include <QMultiMap>
+#include <QJsonObject>
 #include "board/genericmove.h"
 
 class QString;
@@ -123,6 +124,8 @@ class LIB_EXPORT OpeningBook
 		 */
 		bool write(const QString& filename) const;
 
+		QJsonObject toJson() const;
+		bool loadFromJson(const QJsonObject& json);
 
 	protected:
 		friend LIB_EXPORT QDataStream& operator>>(QDataStream& in, OpeningBook* book);

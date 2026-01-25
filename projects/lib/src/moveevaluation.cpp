@@ -25,6 +25,8 @@ MoveEvaluation::MoveEvaluation()
 	  m_selDepth(0),
 	  m_score(NULL_SCORE),
 	  m_time(0),
+	  m_decisionTime(0),
+	  m_moveNumberInfo(""),
 	  m_pvNumber(0),
 	  m_hashUsage(0),
 	  m_ponderhitRate(0),
@@ -42,13 +44,16 @@ bool MoveEvaluation::operator==(const MoveEvaluation& other) const
 	&&  m_selDepth == other.m_selDepth
 	&&  m_score == other.m_score
 	&&  m_time == other.m_time
+	&&  m_decisionTime == other.m_decisionTime
+	&&  m_moveNumberInfo == other.m_moveNumberInfo
 	&&  m_pvNumber == other.m_pvNumber
 	&&  m_hashUsage == other.m_hashUsage
 	&&  m_ponderhitRate == other.m_ponderhitRate
 	&&  m_nodeCount == other.m_nodeCount
 	&&  m_nps == other.m_nps
 	&&  m_tbHits == other.m_tbHits
-	&&  m_ponderMove == other.m_ponderMove)
+	&&  m_ponderMove == other.m_ponderMove
+	&&  m_lastBestMove == other.m_lastBestMove)
 		return true;
 	return false;
 }
@@ -61,13 +66,16 @@ bool MoveEvaluation::operator!=(const MoveEvaluation& other) const
 	||  m_selDepth != other.m_selDepth
 	||  m_score != other.m_score
 	||  m_time != other.m_time
+	||  m_decisionTime != other.m_decisionTime
+	||  m_moveNumberInfo != other.m_moveNumberInfo
 	||  m_pvNumber != other.m_pvNumber
 	||  m_hashUsage != other.m_hashUsage
 	||  m_ponderhitRate != other.m_ponderhitRate
 	||  m_nodeCount != other.m_nodeCount
 	||  m_nps != other.m_nps
 	||  m_tbHits != other.m_tbHits
-	||  m_ponderMove != other.m_ponderMove)
+	||  m_ponderMove != other.m_ponderMove
+	||  m_lastBestMove != other.m_lastBestMove)
 		return true;
 	return false;
 }
@@ -78,13 +86,16 @@ bool MoveEvaluation::isEmpty() const
 	&&  m_selDepth == 0
 	&&  m_score == NULL_SCORE
 	&&  m_time < 500
+	&&  m_decisionTime == 0
+	&&  m_moveNumberInfo.isEmpty()
 	&&  m_pvNumber == 0
 	&&  m_hashUsage == 0
 	&&  m_ponderhitRate == 0
 	&&  m_nodeCount == 0
 	&&  m_nps == 0
 	&&  m_tbHits == 0
-	&&  m_ponderMove.isEmpty())
+	&&  m_ponderMove.isEmpty()
+	&&  m_lastBestMove.isEmpty())
 		return true;
 	return false;
 }
@@ -148,6 +159,16 @@ int MoveEvaluation::time() const
 	return m_time;
 }
 
+int MoveEvaluation::decisionTime() const
+{
+	return m_decisionTime;
+}
+
+QString MoveEvaluation::moveNumberInfo() const
+{
+	return m_moveNumberInfo;
+}
+
 quint64 MoveEvaluation::nodeCount() const
 {
 	return m_nodeCount;
@@ -180,6 +201,11 @@ QString MoveEvaluation::ponderMove() const
 	return m_ponderMove;
 }
 
+QString MoveEvaluation::lastBestMove() const
+{
+	return m_lastBestMove;
+}
+
 QString MoveEvaluation::pv() const
 {
 	return m_pv;
@@ -197,6 +223,8 @@ void MoveEvaluation::clear()
 	m_selDepth = 0;
 	m_score = NULL_SCORE;
 	m_time = 0;
+	m_decisionTime = 0;
+	m_moveNumberInfo.clear();
 	m_pvNumber = 0;
 	m_nodeCount = 0;
 	m_nps = 0;
@@ -237,6 +265,16 @@ void MoveEvaluation::setTime(int time)
 	m_time = time;
 }
 
+void MoveEvaluation::setDecisionTime(int time)
+{
+	m_decisionTime = time;
+}
+
+void MoveEvaluation::setMoveNumberInfo(QString time)
+{
+	m_moveNumberInfo = time;
+}
+
 void MoveEvaluation::setNodeCount(quint64 nodeCount)
 {
 	m_nodeCount = nodeCount;
@@ -267,9 +305,21 @@ void MoveEvaluation::setPonderMove(const QString& san)
 	m_ponderMove = san;
 }
 
+void MoveEvaluation::setLastBestMove(const QString& san)
+{
+	m_lastBestMove = san;
+}
+
 void MoveEvaluation::setPv(const QString& pv)
 {
 	m_pv = pv;
+
+	const QString bestMove = pv.split(" ").first();
+	// Decision changed => decision time needs an update
+	if (bestMove != m_lastBestMove) {
+		m_decisionTime = m_time;
+		m_lastBestMove = bestMove;
+	}
 }
 
 void MoveEvaluation::setPvNumber(int number)
@@ -296,6 +346,8 @@ void MoveEvaluation::merge(const MoveEvaluation& other)
 		m_ponderhitRate = other.m_ponderhitRate;
 	if (!other.m_ponderMove.isEmpty())
 		m_ponderMove = other.m_ponderMove;
+	if (!other.m_lastBestMove.isEmpty())
+		m_lastBestMove = other.m_lastBestMove;
 	if (!other.m_pv.isEmpty())
 		m_pv = other.m_pv;
 	if (other.m_pvNumber)
@@ -304,4 +356,8 @@ void MoveEvaluation::merge(const MoveEvaluation& other)
 		m_score = other.m_score;
 	if (other.m_time)
 		m_time = other.m_time;
+	if (other.m_decisionTime)
+		m_decisionTime = other.m_decisionTime;
+	if (!other.m_moveNumberInfo.isEmpty())
+		m_moveNumberInfo = other.m_moveNumberInfo;
 }

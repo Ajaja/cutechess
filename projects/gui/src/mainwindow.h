@@ -65,6 +65,7 @@ class MainWindow : public QMainWindow
 	private slots:
 		void newGame();
 		void newTournament();
+		void setupTournament(bool start);
 		void onWindowMenuAboutToShow();
 		void showGameWindow();
 		void updateWindowTitle();
@@ -76,6 +77,7 @@ class MainWindow : public QMainWindow
 		void closeTab(int index);
 		void destroyGame(ChessGame* game);
 		void onTournamentFinished();
+		void onTournamentPaused();
 		void onGameManagerFinished();
 		void onGameStartFailed(ChessGame* game);
 		void onGameFinished(ChessGame* game);
@@ -123,6 +125,8 @@ class MainWindow : public QMainWindow
 		void addDefaultWindowMenu();
 		void adjudicateGame(Chess::Side winner);
 
+		Tournament* m_currentTournament = nullptr;
+
 		QMenu* m_gameMenu;
 		QMenu* m_tournamentMenu;
 		QMenu* m_toolsMenu;
@@ -150,7 +154,11 @@ class MainWindow : public QMainWindow
 		QAction* m_copyPgnAct;
 		QAction* m_flipBoardAct;
 		QAction* m_newTournamentAct;
+		QAction* m_loadTournamentAct;
+		QAction* m_saveTournamentAct;
 		QAction* m_stopTournamentAct;
+		QAction* m_pauseTournamentAct;
+		QAction* m_continueTournamentAc;
 		QAction* m_showTournamentResultsAct;
 		QAction* m_minimizeAct;
 		QAction* m_showGameDatabaseWindowAct;

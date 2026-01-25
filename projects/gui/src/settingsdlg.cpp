@@ -17,12 +17,14 @@
 */
 
 #include "settingsdlg.h"
+#include "uitheme.h"
 #include "ui_settingsdlg.h"
 #include <QShowEvent>
 #include <QSettings>
 #include <QFileDialog>
 #include <gamemanager.h>
 #include "cutechessapp.h"
+#include <QApplication>
 
 SettingsDialog::SettingsDialog(QWidget* parent)
 	: QDialog(parent),
@@ -30,6 +32,9 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 {
 	ui->setupUi(this);
 	ui->m_gameSettings->enableSplitTimeControls(true);
+
+	ui->m_themeCombo->addItems(UIThemeManager::instance().getThemeList());
+	ui->m_colorThemeCombo->addItems({"Default (System)", "Light", "Dark"});
 
 	readSettings();
 
@@ -82,6 +87,12 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 		QSettings().setValue("ui/move_animation_duration", value);
 	});
 
+	connect(ui->m_fontSizeSpin, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+		this, [=](int value)
+	{
+		QSettings().setValue("ui/font_size", value);
+	});
+
 	connect(ui->m_concurrencySpin, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
 		this, [=](int value)
 	{
@@ -107,6 +118,12 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 		QSettings().setValue("ui/tb_path", tbPath);
 	});
 
+    connect(ui->m_tournamentDefaultSavepathEdit, &QLineEdit::textChanged,
+            [=](const QString& tourFile)
+    {
+        QSettings().setValue("tournament/default_savepath", tourFile);
+    });
+
 	connect(ui->m_tournamentDefaultPgnOutFileEdit, &QLineEdit::textChanged,
 		[=](const QString& tourFile)
 	{
@@ -121,12 +138,25 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 
 	connect(ui->m_browseTbPathBtn, &QPushButton::clicked,
 		this, &SettingsDialog::browseTbPath);
+    connect(ui->m_tournamentDefaultSavepathBtn, &QPushButton::clicked,
+            this, &SettingsDialog::browseTournamentDefaultSavepath);
 	connect(ui->m_defaultPgnOutFileBtn, &QPushButton::clicked,
 		this, &SettingsDialog::browseDefaultPgnOutFile);
 	connect(ui->m_tournamentDefaultPgnOutFileBtn, &QPushButton::clicked,
 		this, &SettingsDialog::browseTournamentDefaultPgnOutFile);
 	connect(ui->m_tournamentDefaultEpdOutFileBtn, &QPushButton::clicked,
 		this, &SettingsDialog::browseTournamentDefaultEpdOutFile);
+	
+	connect(ui->m_themeCombo, &QComboBox::currentTextChanged,
+		[=](const QString& variant)
+	{
+		QSettings().setValue("ui/theme", variant);
+	});
+	connect(ui->m_colorThemeCombo, &QComboBox::currentTextChanged,
+		[=](const QString& variant)
+	{
+		QSettings().setValue("ui/colorTheme", variant);
+	});
 
 	ui->m_gameSettings->onHumanCountChanged(0);
 	ui->m_gameSettings->enableSettingsUpdates();
@@ -194,6 +224,21 @@ void SettingsDialog::browseTournamentDefaultPgnOutFile()
 	dlg->open();
 }
 
+void SettingsDialog::browseTournamentDefaultSavepath()
+{
+    auto dlg = new QFileDialog(
+        this, tr("Select tournament save file"),
+        QString(),
+        tr("Tournament file (*.trnmt)"));
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->setAcceptMode(QFileDialog::AcceptSave);
+    connect(dlg,
+            &QFileDialog::fileSelected,
+            ui->m_tournamentDefaultSavepathEdit,
+            &QLineEdit::setText);
+    dlg->open();
+}
+
 void SettingsDialog::browseTournamentDefaultEpdOutFile()
 {
 	auto dlg = new QFileDialog(
@@ -229,6 +274,12 @@ void SettingsDialog::readSettings()
 	ui->m_tbPathEdit->setText(s.value("tb_path").toString());
 	ui->m_moveAnimationSpin->setValue(
 		s.value("move_animation_duration", 300).toInt());
+	ui->m_fontSizeSpin->setValue(
+		s.value("font_size", 11).toInt());
+	int index = ui->m_themeCombo->findText(s.value("theme").toString());
+	ui->m_themeCombo->setCurrentIndex(index);
+	index = ui->m_colorThemeCombo->findText(s.value("colorTheme").toString());
+	ui->m_colorThemeCombo->setCurrentIndex(index);
 	s.endGroup();
 
 	s.beginGroup("pgn");
@@ -243,6 +294,8 @@ void SettingsDialog::readSettings()
 	s.endGroup();
 
 	s.beginGroup("tournament");
+    ui->m_tournamentDefaultSavepathEdit
+        ->setText(s.value("default_savepath").toString());
 	ui->m_tournamentDefaultPgnOutFileEdit
 		->setText(s.value("default_pgn_output_file").toString());
 	ui->m_tournamentDefaultEpdOutFileEdit

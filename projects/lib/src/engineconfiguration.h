@@ -22,6 +22,7 @@
 #include <QString>
 #include <QStringList>
 #include <QVariant>
+#include <QJsonObject>
 
 class EngineOption;
 
@@ -240,6 +241,9 @@ class LIB_EXPORT EngineConfiguration
 		 * a reference to this object.
 		 */
 		EngineConfiguration& operator=(const EngineConfiguration& other);
+
+		QJsonObject toJson() const;
+		bool loadFromJson(const QJsonObject& json);
 
 	private:
 		QString m_name;

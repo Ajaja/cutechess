@@ -23,18 +23,21 @@
 #include <qcustomplot.h>
 #include <chessgame.h>
 #include <moveevaluation.h>
+#include "uitheme.h"
 
 EvalHistory::EvalHistory(QWidget *parent)
 	: QWidget(parent),
 	  m_plot(new QCustomPlot(this)),
 	  m_game(nullptr),
-	  m_invertSides(false)
+	  m_invertSides(false),
+	  m_minScore(0),
+	  m_maxScore(0)
 {
 	auto x = m_plot->xAxis;
 	auto y = m_plot->yAxis;
 	auto ticker = new QCPAxisTickerFixed;
 
-	x->setLabel(tr("move"));
+	// x->setLabel(tr("move"));
 	x->setRange(1, 5);
 	x->setTicker(QSharedPointer<QCPAxisTicker>(ticker));
 	x->setSubTicks(false);
@@ -91,11 +94,14 @@ void EvalHistory::setPgnGame(PgnGame* pgn)
 
 void EvalHistory::setScores(const QMap< int, int >& scores)
 {
+	m_minScore = m_maxScore = 0;
+
 	m_plot->addGraph();
 	m_plot->addGraph();
 
-	auto cWhite = QColor(0xff, 0xce, 0x9e);
-	auto cBlack = QColor(0xd1, 0x8b, 0x47);
+	auto cWhite = UIThemeManager::instance().currentTheme().m_lightSquare;
+	auto cBlack = UIThemeManager::instance().currentTheme().m_darkSquare;
+
 	auto pWhite = QPen(cWhite.darker(150));
 	pWhite.setWidth(2);
 	auto pBlack = QPen(cBlack.darker());
@@ -130,6 +136,9 @@ void EvalHistory::addData(int ply, int score)
 	if (side == 1)
 		y = -y;
 
+	m_minScore = std::min(m_minScore, 1.1 * y);
+	m_maxScore = std::max(m_maxScore, 1.1 * y);
+
 	m_plot->graph(side)->addData(x, y);
 }
 
@@ -148,7 +157,9 @@ void EvalHistory::replot(int maxPly)
 		auto ticker = m_plot->xAxis->ticker().dynamicCast<QCPAxisTickerFixed>();
 		Q_ASSERT(!ticker.isNull());
 		ticker->setTickStep(double(step));
+
 		m_plot->rescaleAxes();
+		m_plot->yAxis->setRange(m_minScore, m_maxScore);
 	}
 	m_plot->replot();
 }

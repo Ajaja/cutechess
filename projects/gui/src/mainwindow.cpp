@@ -17,6 +17,7 @@
 
 #include "mainwindow.h"
 
+#include <QFileDialog>
 #include <QAction>
 #include <QHBoxLayout>
 #include <QMenu>
@@ -58,6 +59,7 @@
 #include "evalwidget.h"
 #include "boardview/boardscene.h"
 #include "tournamentresultsdlg.h"
+#include "tournamentfactory.h"
 
 #if 0
 #include <modeltest.h>
@@ -103,8 +105,8 @@ MainWindow::MainWindow(ChessGame* game)
 	#endif
 
 	m_evalHistory = new EvalHistory(this);
-	m_evalWidgets[0] = new EvalWidget(this);
-	m_evalWidgets[1] = new EvalWidget(this);
+	m_evalWidgets[0] = new EvalWidget("player0", this);
+	m_evalWidgets[1] = new EvalWidget("player1", this);
 
 	QVBoxLayout* mainLayout = new QVBoxLayout();
 	mainLayout->addWidget(m_gameViewer);
@@ -187,7 +189,11 @@ void MainWindow::createActions()
 	#endif
 
 	m_newTournamentAct = new QAction(tr("&New..."), this);
+	m_loadTournamentAct = new QAction(tr("&Load from file..."), this);
+	m_saveTournamentAct = new QAction(tr("&Save to file..."), this);
 	m_stopTournamentAct = new QAction(tr("&Stop"), this);
+	m_pauseTournamentAct = new QAction(tr("&Pause"), this);
+	m_continueTournamentAc = new QAction(tr("&Continue"), this);
 	m_showTournamentResultsAct = new QAction(tr("&Results..."), this);
 
 	m_showSettingsAct = new QAction(tr("&Settings"), this);
@@ -256,6 +262,45 @@ void MainWindow::createActions()
 		app, &CuteChessApplication::onQuitAction);
 
 	connect(m_newTournamentAct, SIGNAL(triggered()), this, SLOT(newTournament()));
+	connect(m_loadTournamentAct, &QAction::triggered, [=]()
+	{
+		auto defaultPath = QSettings().value("tournament/default_savepath").toString();
+		if (defaultPath.isEmpty()) defaultPath = QCoreApplication::applicationDirPath();
+		QString fileName = QFileDialog::getOpenFileName(this, "Load tournament from file", defaultPath, "Tournament files (*.trnmt)");
+		if (!fileName.isEmpty()) {
+			m_stopTournamentAct->disconnect();
+			m_pauseTournamentAct->disconnect();
+			m_continueTournamentAc->disconnect();
+
+			m_newTournamentAct->setEnabled(true);
+			m_loadTournamentAct->setEnabled(true);
+			m_saveTournamentAct->setEnabled(false);
+			m_stopTournamentAct->setEnabled(false);
+			m_pauseTournamentAct->setEnabled(false);
+
+			if (m_currentTournament)
+				delete m_currentTournament;
+			m_currentTournament = TournamentFactory::loadFromFile(fileName, CuteChessApplication::instance()->gameManager(), this);
+			setupTournament(false);
+		}
+	});
+	connect(m_saveTournamentAct, &QAction::triggered, [=]()
+	{
+		if (!m_currentTournament) return;
+
+		auto defaultPath = QSettings().value("tournament/default_savepath").toString();
+		if (defaultPath.isEmpty()) defaultPath = QCoreApplication::applicationDirPath();
+		QString fileName = QFileDialog::getSaveFileName(this, "Store tournament in file", defaultPath, "Tournament files (*.trnmt)");
+
+		if (!fileName.isEmpty()) {
+			QFileInfo fileInfo(fileName);
+			if (fileInfo.suffix().toLower() != "trnmt") {
+				fileName += ".trnmt";
+			}
+			
+			TournamentFactory::storeToFile(fileName, m_currentTournament);
+		}
+	});
 
 	connect(m_minimizeAct, &QAction::triggered, this, [=]()
 	{
@@ -304,9 +349,17 @@ void MainWindow::createMenus()
 
 	m_tournamentMenu = menuBar()->addMenu(tr("&Tournament"));
 	m_tournamentMenu->addAction(m_newTournamentAct);
+	m_tournamentMenu->addAction(m_loadTournamentAct);
+	// m_tournamentMenu->addAction(m_saveTournamentAct);
+	// m_tournamentMenu->addAction(m_continueTournamentAc);
+	// m_tournamentMenu->addAction(m_pauseTournamentAct);
 	m_tournamentMenu->addAction(m_stopTournamentAct);
 	m_tournamentMenu->addAction(m_showTournamentResultsAct);
+	m_continueTournamentAc->setEnabled(false);
+	m_pauseTournamentAct->setEnabled(false);
 	m_stopTournamentAct->setEnabled(false);
+	m_loadTournamentAct->setEnabled(true);
+	m_saveTournamentAct->setEnabled(false);
 
 	m_toolsMenu = menuBar()->addMenu(tr("T&ools"));
 	m_toolsMenu->addAction(m_showSettingsAct);
@@ -417,12 +470,12 @@ void MainWindow::readSettings()
 	s.beginGroup("mainwindow");
 
 	restoreGeometry(s.value("geometry").toByteArray());
+	restoreState(s.value("window_state").toByteArray());
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 	// Workaround for https://bugreports.qt.io/browse/QTBUG-16252
 	if (isMaximized())
 		setGeometry(QApplication::desktop()->availableGeometry(this));
 #endif
-	restoreState(s.value("window_state").toByteArray());
 
 	s.endGroup();
 	s.endGroup();
@@ -436,6 +489,7 @@ void MainWindow::writeSettings()
 
 	s.setValue("geometry", saveGeometry());
 	s.setValue("window_state", saveState());
+	s.setValue("window_maximized", isMaximized());
 
 	s.endGroup();
 	s.endGroup();
@@ -789,25 +843,21 @@ void MainWindow::onGameFinished(ChessGame* game)
 	}
 }
 
-void MainWindow::newTournament()
-{
-	NewTournamentDialog dlg(CuteChessApplication::instance()->engineManager(), this);
-	if (dlg.exec() != QDialog::Accepted)
-		return;
-
-	GameManager* manager = CuteChessApplication::instance()->gameManager();
-
-	Tournament* t = dlg.createTournament(manager);
+void MainWindow::setupTournament(bool start) {
+	Tournament* t = m_currentTournament;
 	auto resultsDialog = CuteChessApplication::instance()->tournamentResultsDialog();
 	connect(t, SIGNAL(finished()),
 		this, SLOT(onTournamentFinished()));
+	connect(t, SIGNAL(paused()),
+		this, SLOT(onTournamentPaused()));
 	connect(t, SIGNAL(gameStarted(ChessGame*, int, int, int)),
 		this, SLOT(addGame(ChessGame*)));
 	connect(t, SIGNAL(gameFinished(ChessGame*, int, int, int)),
 		resultsDialog, SLOT(update()));
 	connect(t, SIGNAL(gameFinished(ChessGame*, int, int, int)),
 		this, SLOT(onGameFinished(ChessGame*)));
-	t->start();
+	if (start)
+		t->start();
 
 	connect(m_stopTournamentAct, &QAction::triggered, [=]()
 	{
@@ -820,25 +870,77 @@ void MainWindow::newTournament()
 		}
 
 		t->stop();
+		m_currentTournament = nullptr;
 	});
-	m_newTournamentAct->setEnabled(false);
+	connect(m_pauseTournamentAct, &QAction::triggered, [=]()
+	{
+		auto btn = QMessageBox::question(this, tr("Pause tournament"), tr("Do you really want to pause the ongoing tournament?"));
+		if (btn != QMessageBox::Yes) {
+			m_closing = false;
+			return;
+		}
+
+		m_stopTournamentAct->setEnabled(false);
+		m_pauseTournamentAct->setEnabled(false);
+		t->pause();
+	});
+	connect(m_continueTournamentAc, &QAction::triggered, [=]()
+	{
+		auto btn = QMessageBox::question(this, tr("Continue tournament"), tr("Do you really want to continue the paused tournament?"));
+		if (btn != QMessageBox::Yes) {
+			m_closing = false;
+			return;
+		}
+
+		m_continueTournamentAc->setEnabled(false);
+		m_stopTournamentAct->setEnabled(true);
+		m_pauseTournamentAct->setEnabled(true);
+		m_loadTournamentAct->setEnabled(false);
+		m_saveTournamentAct->setEnabled(false);
+		t->continueAfterPause();
+	});
+	
+	m_loadTournamentAct->setEnabled(false);
+	m_saveTournamentAct->setEnabled(false);
 	m_stopTournamentAct->setEnabled(true);
+	m_pauseTournamentAct->setEnabled(true);
+	m_newTournamentAct->setEnabled(false);
+
 	resultsDialog->setTournament(t);
+}
+
+void MainWindow::newTournament()
+{
+	NewTournamentDialog dlg(CuteChessApplication::instance()->engineManager(), this);
+	if (dlg.exec() != QDialog::Accepted)
+		return;
+
+	GameManager* manager = CuteChessApplication::instance()->gameManager();
+
+	m_currentTournament = dlg.createTournament(manager);
+	setupTournament(true);
 }
 
 void MainWindow::onTournamentFinished()
 {
 	Tournament* tournament = qobject_cast<Tournament*>(QObject::sender());
+	if (!tournament)
+		tournament = m_currentTournament;
 	Q_ASSERT(tournament != nullptr);
 
 	m_stopTournamentAct->disconnect();
+	m_pauseTournamentAct->disconnect();
+	m_continueTournamentAc->disconnect();
 
 	QString error = tournament->errorString();
 	QString name = tournament->name();
 
 	tournament->deleteLater();
 	m_newTournamentAct->setEnabled(true);
+	m_loadTournamentAct->setEnabled(true);
+	m_saveTournamentAct->setEnabled(false);
 	m_stopTournamentAct->setEnabled(false);
+	m_pauseTournamentAct->setEnabled(false);
 
 	if (m_closing)
 	{
@@ -857,6 +959,14 @@ void MainWindow::onTournamentFinished()
 	}
 
 	CuteChessApplication::alert(this);
+}
+
+void MainWindow::onTournamentPaused()
+{
+	m_continueTournamentAc->setEnabled(true);
+	m_saveTournamentAct->setEnabled(true);
+	m_stopTournamentAct->setEnabled(true);
+	QMessageBox::information(this, "Tournament pause", "The tournament is now paused.");
 }
 
 void MainWindow::onWindowMenuAboutToShow()

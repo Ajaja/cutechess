@@ -435,3 +435,38 @@ void TimeControl::writeSettings(QSettings* settings)
 
 	settings->endGroup();
 }
+
+QJsonObject TimeControl::toJson() const
+{
+    QJsonObject json;
+
+    json["movesPerTc"] = m_movesPerTc;
+    json["timePerTc"] = m_timePerTc;
+    json["timePerMove"] = m_timePerMove;
+    json["increment"] = m_increment;
+    json["plyLimit"] = m_plyLimit;
+    json["nodeLimit"] = static_cast<double>(m_nodeLimit);
+    json["expiryMargin"] = m_expiryMargin;
+    json["infinite"] = m_infinite;
+    json["hourglass"] = m_hourglass;
+
+    return json;
+}
+
+bool TimeControl::loadFromJson(const QJsonObject& json)
+{
+    if (json.isEmpty())
+        return false;
+
+    m_movesPerTc = json.value("movesPerTc").toInt(m_movesPerTc);
+    m_timePerTc = json.value("timePerTc").toInt(m_timePerTc);
+    m_timePerMove = json.value("timePerMove").toInt(m_timePerMove);
+    m_increment = json.value("increment").toInt(m_increment);
+    m_plyLimit = json.value("plyLimit").toInt(m_plyLimit);
+    m_nodeLimit = static_cast<qint64>(json.value("nodeLimit").toDouble(m_nodeLimit));
+    m_expiryMargin = json.value("expiryMargin").toInt(m_expiryMargin);
+    m_infinite = json.value("infinite").toBool(m_infinite);
+    m_hourglass = json.value("hourglass").toBool(m_hourglass);
+
+    return isValid();
+}
