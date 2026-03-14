@@ -1,8 +1,6 @@
 name: release cutechess
-on:
-  push:
-    tags:
-      - 'v*'
+
+on: [workflow_dispatch]
 
 jobs:
     githubrel:
