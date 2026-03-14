@@ -1,4 +1,4 @@
-name: release cutechess
+name: Windows release
 
 on: [workflow_dispatch]
 
